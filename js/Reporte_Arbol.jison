@@ -3,18 +3,15 @@
 
 /*  Directivas lexicas, expresiones regulares ,Analisis Lexico */
 %lex
-%options flex case-sensitive
-%options yylineno
-%locations
+%options case-insensitive
 %%
 \s+                   /* salta espacios en blanco */
 "//".*               {/* comentario simple*/}
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] {/*comentario multilinea*/}
 
 /*  CADENAS  */
-[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  yytext = yytext.substr(1,yyleng-2);return 'Cadena'; }
+[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  return 'Cadena'; }
 [\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {  return 'Cadena'; }
-[\`][^\\\`]*([\\][\\\`ntr][^\\\`]*)*[\`]            {  return 'Cadena'; }
 
 
 /*TIPOS DE DATOS*/
@@ -30,8 +27,11 @@
 "let"                                               {  return 'R_Let';   }
 "const"                                             {  return 'R_Const'; }
 "Array"                                             {  return 'R_Array'; }
-"push"                                              {  return 'R_Push';  }
-"pop"                                               {  return 'R_Pop';   }
+"new"                                               {  return 'R_New'; }
+"CharAt"                                            {  return 'R_CharAt'; }
+"ToLowerCase"                                       {  return 'R_Tlower';}
+"ToUpperCase"                                       {  return 'R_Touppper';}
+"Concat"                                            {  return 'R_Concat'; }
 "length"                                            {  return 'R_Length';}
 "function"                                          {  return 'R_Funcion';}
 "graficar_ts"                                       { return 'R_Graficar';}
@@ -162,8 +162,6 @@ CONTENIDO : FUNCIONES                                       {$$ = {Nombre:"CONTE
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                                            {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7]};}
           | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra                  {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7,$9]};}
-          | R_Let Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa    {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$6,$8,$10]};}
-          | R_Const Identificador S_Igual R_Funcion S_ParentesisAbre PARAM S_ParentesisCierra TIPAR_FUNCION S_LlaveAbre EDD S_LlaveCierra S_PuntoComa  {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$8,$10]};}
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
 EDD:LISTADO_ESTRUCTURAS                                                 {$$ = $1;}
@@ -189,13 +187,10 @@ ESTRUCTURAS_DE_CONTROL: VARIABLES                                       {$$ = {N
                       | FOR_OF                                          {$$ = {Nombre:"CICLO",vector:[$1]};}
                       | FOR_IN                                          {$$ = {Nombre:"CICLO",vector:[$1]};}
                       | SENTENCIAS_TRANSFERENCIA                        
-                      | FUNCION_GRAFICAR
                       | LLAMADA_FUNC                                    {$$ = {Nombre:"ESTRUCTURAS_DE_CONTROL",vector:[$1]};}
                       | TYPES                                           {$$ = {Nombre:"DECLARACION_TYPE",vector:[$1]};}
 ;
-/*--------------------------------------------- FUNCIONES NATIVAS ---------------------------------------------------------*/
-FUNCION_GRAFICAR : R_Graficar S_ParentesisAbre S_ParentesisCierra S_PuntoComa      {$$ = {Nombre : "GRAFICAR_TS" , vector:[]};}
-;
+
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
 
 SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                          {$$ = {Nombre:"BREAK",vector:[]};}
@@ -297,7 +292,6 @@ ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                
            | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                                   {$$ = {Nombre : "ASIGNACION" , vector :[{Nombre : "ASIGNACION", vector : [{Nombre : $1 , vector : []} ,$2]},$3]};}   
            | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                                                   {$$ = {Nombre : "ASIGNACION" , vector :[{Nombre : "ASIGNACION", vector : [$1 ,{Nombre : $2 , vector : []}]},$3]};}
            | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                                                   {$$ = {Nombre : "ASIGNACION" , vector :[{Nombre : "ASIGNACION", vector : [{Nombre : $1 , vector : []} ,$2]},$3]};}
-           | ATRIBUTOS S_Punto R_Push S_ParentesisAbre LISTA_DE_ASIGNACIONES S_ParentesisCierra COMPLETAR_ASIGNACION S_PuntoComa  {$$ = {Nombre : "ASIGNACION" , vector : [$1,{Nombre: $3 , vector : []},{Nombre : $4 , vector : []},$5,{Nombre : $6 , vector : []},$7]};}
             //asignacion push
 ;
 
@@ -395,7 +389,6 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
 
 LLAMADA_FUNC
     : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa                     {$$ = {Nombre : "LLAMADA_FUNC", vector : [{Nombre : $1, vector : []},$3]};}
-    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra S_PuntoComa                           {$$ = {Nombre : "LLAMADA_FUNC", vector : [$1,{Nombre : $3 , vector : []}]};}
 ;
 
 PARAMETROS_FUNC
@@ -415,10 +408,9 @@ LISTA_PARAMETROS : LISTA_PARAMETROS S_Coma PARAMETROS                           
 
 PARAMETROS : Identificador S_DosPuntos TIPOS_DE_DATO                                                    {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3]};}
            | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual LISTA_DE_ASIGNACIONES                      {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,{Nombre : $4 , vector : []},$5]};}
-           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO                                    {$$ = {Nombre : "PARAMETROS_OPCIONALES" , vector : [{Nombre: $1 , vector : []}, $4]};}
            | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE                                         {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,$4]};}
            | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual LISTA_DE_ASIGNACIONES           {$$ = {Nombre : "PARAMETROS" , vector : [{Nombre: $1 , vector : []}, $3,$4,{Nombre : $5 , vector : []},$6]};}
-           | Identificador S_Interrogacion S_DosPuntos TIPOS_DE_DATO L_CORCHETE                         {$$ = {Nombre : "PARAMETROS_OPCIONALES" , vector : [{Nombre: $1 , vector : []}, $4,$5]};}
+           
 
 ;
 /*---------------------------------------------TYPES---------------------------------------------------------*/
@@ -496,7 +488,7 @@ EXPRESION_G
     | CONTENIDO_EXPRESION OP_Incremento                                                          { $$ = {Nombre:"EXPRESION_G",vector : [$1,{Nombre: $2 , vector : []}]}; }
     | OP_Decremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
     | OP_Incremento CONTENIDO_EXPRESION                                                          { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }
-    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                                     { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
+    | OP_Menos  CONTENIDO_EXPRESION  %prec UMINUS                                                { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
     | LOG_Not   EXPRESION_G     %prec UMINUS                                                     { $$ = {Nombre:"EXPRESION_G",vector : [{Nombre: $1 , vector : []},$2]}; }  
     | CONTENIDO_EXPRESION                                                                        { $$ = {Nombre:"EXPRESION_G",vector : [$1]}; } 
 ;
@@ -507,15 +499,34 @@ EXPRESION_G
     | R_True                                                                                    {$$ = {Nombre: $1 , vector : []};}
     | R_False                                                                                   {$$ = {Nombre: $1 , vector : []};}
     | Cadena                                                                                    {$$ = {Nombre: $1 , vector : []};}
+    | Cadena MET_STRING     /*Metodos string*/                                                  {$$ = {Nombre: "METODO_STRING" ,vector : [{Nombre : $1, vector : []},$2]};}
+    | ATRIBUTOS MET_STRING    /*Metodos string*/                                                {$$ = {Nombre: "METODO_STRING" ,vector : [$1,$2]};}
+    | Identificador S_ParentesisAbre S_ParentesisCierra MET_STRING   /*Metodos string*/         {$$ = {Nombre: "METODO_STRING" ,vector :[{Nombre : $1 , vector : []},{Nombre : $2 , vector : []},{Nombre : $3 , vector : []},$4]};}
+    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra MET_STRING /*Metodos string*/  {$$ = {Nombre: "METODO_STRING" ,vector :[{Nombre : $1 , vector : []},{Nombre : $2 , vector : []},$3,{Nombre : $4 , vector : []},$5]};}
+    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra   MET_STRING  /*Metodos string*/          {$$ = {Nombre: "METODO_STRING" ,vector :[{Nombre : $1 , vector : []},$2,{Nombre : $3 , vector : []},$4]};}
     | Identificador S_ParentesisAbre S_ParentesisCierra                                         {$$ = {Nombre: "LLAMADA_FUNCION",vector : [{Nombre : $1, vector : []}]};}            
     | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                                {$$ = {Nombre: "LLAMADA_FUNCION",vector : [{Nombre : $1, vector : []},$3]};}  
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                           {$$ = $2;}
     | ATRIBUTOS                                                                                 {$$ = $1;}
     | ATRIBUTOS S_Punto R_Length                                                                {$$ = {Nombre : "FUNCION_LENGTH" , vector : [$1 , {Nombre : $3 , vector : []}]};}
-    | ATRIBUTOS S_Punto R_Pop S_ParentesisAbre S_ParentesisCierra                               {$$ = {Nombre : "FUNCION_POP"    , vector : [$1 , {Nombre : $3 , vector : []}]};}
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */   
 
 OPCIONAL 
     : OPCIONAL S_Coma EXPRESION_G                                                               {$$ = { Nombre : "OPCIONAL" , vector :[$1,$3]} ;}
     | EXPRESION_G                                                                               {$$ = { Nombre : "OPCIONAL" , vector :[$1]} ;}
 ; 
+
+
+/*----------------------------------------------------METODOS STRING----------------------------------------------------*/
+MET_STRING :L_MET_STRING
+;
+
+L_MET_STRING : L_MET_STRING  CONT_MET_STRING                                                    {$$ = { Nombre : "LISTADO_MET_STRING" , vector : [$1,$2]};}
+             | CONT_MET_STRING                                                                  {$$ = { Nombre : "LISTADO_MET_STRING" , vector : [$1]};}
+;   
+
+CONT_MET_STRING: S_Punto R_CharAt S_ParentesisAbre EXPRESION_G S_ParentesisCierra               {$$ = { Nombre : $2 , vector : [{Nombre : $3 , vector : []},$4,{Nombre : $5 , vector : []}]};}
+               | S_Punto R_Tlower S_ParentesisAbre S_ParentesisCierra                           {$$ = { Nombre : $2 , vector : [{Nombre : $3 , vector : []},{Nombre : $4 , vector : []}]};}
+               | S_Punto R_Touppper S_ParentesisAbre S_ParentesisCierra                         {$$ = { Nombre : $2 , vector : [{Nombre : $3 , vector : []},{Nombre : $4 , vector : []}]};}
+               | S_Punto R_Concat S_ParentesisAbre OPCIONAL S_ParentesisCierra                  {$$ = { Nombre : $2 , vector : [{Nombre : $3 , vector : []},$4,{Nombre : $5 , vector : []}]};}
+;

@@ -4,7 +4,6 @@ function errores() {
   console.log(vector);
   var texto = Consola.getValue();
   if (vector.Errores.length > 0) {
-    removeTableBody();
     LlenarVariables(vector.Errores);
     Consola.setValue(
       texto +
@@ -17,25 +16,43 @@ function errores() {
   }
 }
 
-function removeTableBody() {
-  $("#Tabla_Errores tbody").empty();
+function generarTablasErrores(vector, titulo) {
+  var div = document.getElementById("erroresT");
+  var cad2 = " ";
+  cad2 = GenerarTErrores(vector, titulo);
+  div.innerHTML = cad2;
 }
 
-function LlenarVariables(vector) {
+function GenerarTErrores(v, titulo) {
+  var cad = "";
+  cad += "<H2><u>" + titulo + "</u></H2>";
+  cad += ' <div class="table-wrapper-scroll-y my-custom-scrollbar">\n';
+  cad += '<table class="table table-bordered table-striped mb-0">\n';
+  cad += "<thead>\n<tr>\n";
+  cad +=
+    '<th scope="col">#</th>\n<th scope="col">Tipo Error</th>\n<th scope="col">Error</th>\n<th scope="col">Fila</th>\n<th scope="col">Columna</th>\n';
+  cad += "</tr>\n";
+  cad += '<tbody id="tablaS">';
+  cad += LlenarVariablesE(v);
+  cad += "</tbody>";
+  cad += "</table>";
+  cad += "</div>";
+  return cad;
+}
+
+function LlenarVariablesE(vector) {
   var contarVar = 0;
   var tError = "";
   var error = "";
   var fila = 0;
   var columna = 0;
-
-  removeTableBody();
-
+  var htmlTags = "";
   vector.forEach(function (elemento) {
     tError = elemento.tipo;
     error = elemento.Error;
     fila = elemento.Fila;
     columna = elemento.Columna;
-    var htmlTags =
+    htmlTags +=
       "<tr>" +
       "<td>" +
       (contarVar + 1) +
@@ -54,7 +71,7 @@ function LlenarVariables(vector) {
       "</td>" +
       "</tr>";
     //console.log(htmlTags);
-    $("#Tabla_Errores tbody").append(htmlTags);
     contarVar++;
   });
+  return htmlTags;
 }

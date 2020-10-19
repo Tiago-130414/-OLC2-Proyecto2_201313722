@@ -1,6 +1,8 @@
 /* descripcion: ANALIZADOR DEL LENGUAJE JAVA */
 // segmento de codigo, importaciones y todo dentro de 
-
+%{
+    var tablaErrores = [];
+%}
 /*  Directivas lexicas, expresiones regulares ,Analisis Lexico */
 %lex
 %options case-insensitive
@@ -108,21 +110,25 @@
 /*  IDENTIFICADORES */
 ([a-zA-Z_])[a-zA-Z0-9_]*                            {return 'Identificador';}
 <<EOF>>                                             {  return 'EOF'; }
-.                                                   {console.error("error lexico: " + yytext)}
+.                                                   {tablaErrores.push({ tipo  : ' Error_Lexico ', Error  : yytext ,  Fila  : yylloc.first_line , Columna  :  yylloc.first_column });}
 /lex
 %{
-
+function limpiarErrores(){
+    tablaErrores = [];
+}
 
 let ind = 0;
 function graficar(arbol){
     let graphviz = "", nodo1 = "";
     nodo1 = 'nodo' + ind++;
     graphviz +=  nodo1 + '[label="' + arbol.Nombre + '"];\n';
-    arbol.vector.forEach(function(elemento){
+    if(Array.isArray(arbol.vector)){
+        arbol.vector.forEach(function(elemento){
         let nodo2 = 'nodo' + ind;
         graphviz += nodo1 + '->' + nodo2 + ';\n';
         graphviz += graficar(elemento);
     });
+    }
     return graphviz;
 }
 
@@ -142,7 +148,7 @@ function graficar(arbol){
 %start INICIO
 
 %%
-INICIO : CONT EOF{console.log($1);console.log(graficar($1));return graficar($1);}
+INICIO : CONT EOF{var temp; temp = tablaErrores;limpiarErrores();return {codG : graficar($1) , err : temp};}
 ;
 /*---------------------------------------------LISTA DE CONTENIDO GLOBAL---------------------------------------------------------*/
 CONT: LISTA_CONTENIDO                                       {$$ = {Nombre:"CONT",vector:[$1]};}
@@ -157,7 +163,7 @@ LISTA_CONTENIDO : LISTA_CONTENIDO CONTENIDO                 {$$ = {Nombre: "LIST
 //CONTENIDO GLOBAL
 CONTENIDO : FUNCIONES                                       {$$ = {Nombre:"CONTENIDO",vector:[$1]};}
           | ESTRUCTURAS_DE_CONTROL                          {$$ = {Nombre:"CONTENIDO",vector:[$1]};}
-          |  error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+          |  error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                                            {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7]};}
@@ -173,7 +179,7 @@ LISTADO_ESTRUCTURAS : LISTADO_ESTRUCTURAS CONT_ESTRUCTURAS_CONTROL        {$$ = 
 ;
 
 CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
-                         | error  {$$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+                         | error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 
 ESTRUCTURAS_DE_CONTROL: VARIABLES                                       {$$ = {Nombre:"DECLARACION_VARIABLES",vector:[$1]};}

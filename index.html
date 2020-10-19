@@ -109,7 +109,7 @@
               <ul class="dropdown-menu">
                 <li class="dropdown-header">Menu</li>
                 <li>
-                  <a href="#" id="Traducir" onclick="traducir();"
+                  <a href="#" id="Traducir" onclick="generarIntermedio();"
                     ><svg
                       width="1em"
                       height="1em"
@@ -127,7 +127,7 @@
                   >
                 </li>
                 <li>
-                  <a href="#" id="Ejecutar" onclick="ejJson();"
+                  <a href="#" id="Ejecutar"
                     ><svg
                       width="1em"
                       height="1em"
@@ -300,23 +300,7 @@
                       <div id="htmlTxt" class="tab-pane fade in active"></div>
                     </div>
                     <div id="tablaErrores" class="tab-pane fade">
-                      <div class="table-wrapper-scroll-y my-custom-scrollbar">
-                        <table
-                          id="Tabla_Errores"
-                          class="table table-bordered table-striped mb-0"
-                        >
-                          <thead>
-                            <tr>
-                              <th scope="col">#</th>
-                              <th scope="col">Tipo Error</th>
-                              <th scope="col">Error</th>
-                              <th scope="col">Fila</th>
-                              <th scope="col">Columna</th>
-                            </tr>
-                          </thead>
-                          <tbody></tbody>
-                        </table>
-                      </div>
+                      <div id="erroresT" class="tab-pane fade in active"></div>
                     </div>
                     <div id="tablaRegistro" class="tab-pane fade">
                       <div id="TablaLog" class="tab-pane fade in active"></div>
@@ -396,17 +380,17 @@
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="bootstrap/js/ie10-viewport-bug-workaround.js"></script>
     <!-- MANIPULAR ELEMENTOS Y FUNCIONES DEL PROYECTO -->
+    <!--REPORTE DE ERRORES-->
+    <script src="js/Manejo_Errores.js"></script>
+    <script src="js/Manejo_TablaSimbolos.js"></script>
     <!-- REPORTE DE ARBOL-->
     <script src="js/Reporte_Arbol.js"></script>
     <script src="js/Reporte_AST.js"></script>
-    <!--REPORTE DE ERRORES-->
-    <script src="js/Reporte_Errores.js"></script>
-    <script src="js/Manejo_Errores.js"></script>
-    <script src="js/Manejo_TablaSimbolos.js"></script>
-    <script src="js/ejecutar.js"></script>
     <!--ANALISIS-->
+    <script src="js/fundamentosCI.js"></script>
     <script src="js/Manipular_Interfaz.js"></script>
     <script src="js/Traduccion.js"></script>
+    <script src="js/GenerarCodigoIntermedio.js"></script>
     <!--INTERFAZ-->
     <script src="js/Modificar_TextArea_CodeMirror.js"></script>
     <!-- LIBRERIAS PARA GENERAR GRAPHVIZ WEB -->

@@ -84,7 +84,7 @@ performAction: function anonymous(yytext, yyleng, yylineno, yy, yystate /* actio
 var $0 = $$.length - 1;
 switch (yystate) {
 case 1:
-console.log($$[$0-1]);console.log(graficar($$[$0-1]));return graficar($$[$0-1]);
+var temp; temp = tablaErrores;limpiarErrores();return {codG : graficar($$[$0-1]) , err : temp};
 break;
 case 2:
 this.$ = {Nombre:"CONT",vector:[$$[$0]]};
@@ -102,7 +102,7 @@ case 6: case 7:
 this.$ = {Nombre:"CONTENIDO",vector:[$$[$0]]};
 break;
 case 8: case 16:
-this.$ ='';console.log({ Tipo_Error  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });
+this.$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });
 break;
 case 9:
 this.$ = {Nombre:"FUNCIONES",vector:[{Nombre:$$[$0-6],vector :[]},$$[$0-4],$$[$0-1]]};
@@ -713,18 +713,24 @@ _handle_error:
     return true;
 }};
 
+    var tablaErrores = [];
 
+function limpiarErrores(){
+    tablaErrores = [];
+}
 
 let ind = 0;
 function graficar(arbol){
     let graphviz = "", nodo1 = "";
     nodo1 = 'nodo' + ind++;
     graphviz +=  nodo1 + '[label="' + arbol.Nombre + '"];\n';
-    arbol.vector.forEach(function(elemento){
+    if(Array.isArray(arbol.vector)){
+        arbol.vector.forEach(function(elemento){
         let nodo2 = 'nodo' + ind;
         graphviz += nodo1 + '->' + nodo2 + ';\n';
         graphviz += graficar(elemento);
     });
+    }
     return graphviz;
 }
 
@@ -1204,7 +1210,7 @@ case 72:return 11;
 break;
 case 73:  return 5; 
 break;
-case 74:console.error("error lexico: " + yy_.yytext)
+case 74:tablaErrores.push({ tipo  : ' Error_Lexico ', Error  : yy_.yytext ,  Fila  : yy_.yylloc.first_line , Columna  :  yy_.yylloc.first_column });
 break;
 }
 },

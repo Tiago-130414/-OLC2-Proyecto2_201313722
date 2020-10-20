@@ -112,7 +112,7 @@
     function expresionB (OpI,operacion,opD){
         return {
             OpIzq : OpI,
-            operacion: operacion,
+            tipo: operacion,
             OpDer : opD,
         };
     }
@@ -238,7 +238,7 @@ DEFINIR_DEFAULT: R_Default S_DosPuntos EDD
 IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa                  {$$ = {tipo : "IMPRIMIR" , instruccion: "CONSOLE", contenido: $5};}
 ;
 
-FUNC: EXPRESION_G                       {var arr = [];if(Array.isArray($1)){arr = $1;}else{arr = [$1];} ;$$ = arr;}
+FUNC: EXPRESION_G                       {var arr;if(Array.isArray($1)){arr = $1;}else{arr = [$1];} ;$$ = arr;}
     |                                   {$$ = [];}
 ;
 /*---------------------------------------------WHILE---------------------------------------------------------*/
@@ -489,11 +489,11 @@ EXPRESION_G
 ;
 
  CONTENIDO_EXPRESION
-    : Entero                                                                                {$$ = {tipo:"VALOR" , tipoDato : "ENTERO" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                     
-    | Decimal                                                                               {$$ = {tipo:"VALOR" , tipoDato : "DECIMAL", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}    
-    | R_True                                                                                {$$ = {tipo:"VALOR" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                      
-    | R_False                                                                               {$$ = {tipo:"VALOR" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
-    | Cadena                                                                                {$$ = {tipo:"VALOR" , tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
+    : Entero                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "NUMERO" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                     
+    | Decimal                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "NUMERO", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}    
+    | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                      
+    | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
+    | Cadena                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
     | Cadena MET_STRING     /*Metodos string*/
     | ATRIBUTOS MET_STRING    /*Metodos string*/                                                                             
     | Identificador S_ParentesisAbre S_ParentesisCierra                                     {$$ = {tipo : "LLAMADA_F" , identificador : $1 , parametros : [] , fila : this._$.first_line, columna: this._$.first_column};}

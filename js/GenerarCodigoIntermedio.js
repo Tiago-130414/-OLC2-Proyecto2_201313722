@@ -20,7 +20,40 @@ function generarIntermedio() {
 function generate(json) {
   for (var element of json) {
     if (element.tipo == "DECLARACION") {
+      //ESTA ES LA VARIABLE
       console.log(element.contenido);
+    } else if (element.tipo == "IMPRIMIR") {
+      //ESTE ES EL CONSOLE
+      generarImprimir(element.contenido);
     }
+  }
+}
+///////////////////////////////////////////////// CONSOLE
+function generarImprimir(element) {
+  var exp;
+  if (Array.isArray(element)) {
+    exp = element[0];
+  } else {
+    exp = element;
+  }
+  console.log(exp);
+  var result = leerExpresion(exp);
+  console.log(result);
+}
+
+function leerExpresion(expresion) {
+  if (
+    expresion.tipo == "+" ||
+    expresion.tipo == "-" ||
+    expresion.tipo == "*" ||
+    expresion.tipo == "/" ||
+    expresion.tipo == "**" ||
+    expresion.tipo == "%"
+  ) {
+    return operacionesAritmeticas(expresion);
+  } else if (expresion.tipo == "PRIMITIVO") {
+    return expresion;
+  } else if (expresion.tipo == "VALOR") {
+    return expresion;
   }
 }

@@ -24,19 +24,11 @@ function eliminarA() {
 function rNomAmbito() {
   return nombAmbitos[nombAmbitos.length - 1];
 }
-//////////////////////////////////////////////INCREMENTAR TEMPORAL
-function iTemporal() {
-  temporal++;
-}
-//////////////////////////////////////////////INCREMENTAR LABEL
-function iEtiqueta() {
-  etiqueta++;
-}
 //////////////////////////////////////////////RETORNAR TEMPORAL
 function rTemporal() {
-  return "T" + temporal;
+  return "T" + temporal++;
 }
 //////////////////////////////////////////////RETORNAR LABEL
-function iTemporal() {
-  return "L" + etiqueta;
+function rLabel() {
+  return "L" + etiqueta++;
 }

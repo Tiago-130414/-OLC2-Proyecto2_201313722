@@ -108,7 +108,7 @@ case 50:
 this.$ = {tipo : "IMPRIMIR" , instruccion: "CONSOLE", contenido: $$[$0-2]};
 break;
 case 51:
-var arr = [];if(Array.isArray($$[$0])){arr = $$[$0];}else{arr = [$$[$0]];} ;this.$ = arr;
+var arr;if(Array.isArray($$[$0])){arr = $$[$0];}else{arr = [$$[$0]];} ;this.$ = arr;
 break;
 case 73:
 this.$ = {tipo : "ASIGNACION" , identificador : $$[$0-3] , ope : '=' ,valor : $$[$0-1]};
@@ -249,16 +249,16 @@ case 172:
 this.$ = expresionB(undefined,'!' ,$$[$0]);
 break;
 case 174:
-this.$ = {tipo:"VALOR" , tipoDato : "ENTERO" , valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
+this.$ = {tipo:"PRIMITIVO" , tipoDato : "NUMERO" , valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
 break;
 case 175:
-this.$ = {tipo:"VALOR" , tipoDato : "DECIMAL", valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
+this.$ = {tipo:"PRIMITIVO" , tipoDato : "NUMERO", valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
 break;
 case 176: case 177:
-this.$ = {tipo:"VALOR" , tipoDato : "BOOLEAN", valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
+this.$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
 break;
 case 178:
-this.$ = {tipo:"VALOR" , tipoDato : "CADENA" , valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
+this.$ = {tipo:"VALOR"     , tipoDato : "CADENA" , valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
 break;
 case 181:
 this.$ = {tipo : "LLAMADA_F" , identificador : $$[$0-2] , parametros : [] , fila : this._$.first_line, columna: this._$.first_column};
@@ -526,7 +526,7 @@ _handle_error:
     function expresionB (OpI,operacion,opD){
         return {
             OpIzq : OpI,
-            operacion: operacion,
+            tipo: operacion,
             OpDer : opD,
         };
     }

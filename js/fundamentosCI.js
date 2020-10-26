@@ -2,6 +2,7 @@
 let ambitos = [];
 let nombAmbitos = [];
 let logAmbitos = [];
+//let codigo3D = [];
 let erroresCI = [];
 let temporal = 0;
 let etiqueta = 0;
@@ -28,7 +29,17 @@ function rNomAmbito() {
 function rTemporal() {
   return "T" + temporal++;
 }
+
+function rTActual() {
+  return "T" + temporal;
+}
 //////////////////////////////////////////////RETORNAR LABEL
 function rLabel() {
   return "L" + etiqueta++;
+}
+
+function limpiar() {
+  //codigo3D = [];
+  temporal = 0;
+  etiqueta = 0;
 }

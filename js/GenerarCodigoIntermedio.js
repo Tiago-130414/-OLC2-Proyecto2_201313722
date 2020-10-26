@@ -12,7 +12,8 @@ function generarIntermedio() {
   eliminarA();
   //luego de generar el codigo valido se reportan los errores
   if (erroresCI.length > 0) {
-    generarTablasErrores(json.err, "Codigo Intermedio");
+    generarTablasErrores(erroresCI, "Codigo Intermedio");
+    erroresCI = [];
   }
 }
 
@@ -21,7 +22,7 @@ function generate(json) {
   for (var element of json) {
     if (element.tipo == "DECLARACION") {
       //ESTA ES LA VARIABLE
-      console.log(element.contenido);
+      declaracion(element.contenido, element.modificador);
     } else if (element.tipo == "IMPRIMIR") {
       //ESTE ES EL CONSOLE
       generarImprimir(element.contenido);
@@ -38,7 +39,18 @@ function generarImprimir(element) {
   }
   console.log(exp);
   var result = leerExpresion(exp);
-  console.log(result);
+
+  if (result.tipo != "Error Semantico") {
+    if (result.tipo == "C3D") {
+      console.log(result);
+      //codigo3D.push(result);
+      //console.log(codigo3D);
+      limpiar();
+    }
+  } else {
+    //console.log(result);
+    erroresCI.push(result);
+  }
 }
 
 function leerExpresion(expresion) {
@@ -51,6 +63,21 @@ function leerExpresion(expresion) {
     expresion.tipo == "%"
   ) {
     return operacionesAritmeticas(expresion);
+  } else if (
+    expresion.tipo == ">=" ||
+    expresion.tipo == ">" ||
+    expresion.tipo == "<=" ||
+    expresion.tipo == "<" ||
+    expresion.tipo == "==" ||
+    expresion.tipo == "!="
+  ) {
+    return operacionesRelacionales(expresion);
+  } else if (
+    expresion.tipo == "&&" ||
+    expresion.tipo == "||" ||
+    expresion.tipo == "!"
+  ) {
+    return operacionesLogicas(expresion);
   } else if (expresion.tipo == "PRIMITIVO") {
     return expresion;
   } else if (expresion.tipo == "VALOR") {

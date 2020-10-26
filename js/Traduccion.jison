@@ -34,6 +34,7 @@
 "Concat"                                            {  return 'R_Concat'; }
 "length"                                            {  return 'R_Length';}
 "function"                                          {  return 'R_Funcion';}
+"null"                                              {  return 'R_Null';}
 
 /*ESTRUCTURAS DE CONTROL*/
 "if"                                                {return 'R_If';}
@@ -443,10 +444,10 @@ SEPARADOR_DECLARACION_TYPES : S_Coma
 
 /*---------------------------------------------TIPOS DE DATO---------------------------------------------------------*/
 // ESTO NO SE MODIFICA PARA RETORNAR VALORES PARA FORMAR JSON
-TIPOS_DE_DATO : T_Number                                                                        
-              | T_Boolean                                                                       
-              | T_String                                                                        
-              | T_Void                                                                          
+TIPOS_DE_DATO : T_Number                                                    {$$ = "NUMERO";}                    
+              | T_Boolean                                                   {$$ = "BOOLEAN";}    
+              | T_String                                                    {$$ = "CADENA";}    
+              | T_Void                                                      {$$ = "VOID";}    
               | Identificador                                                                  
 ;
 //agrega tipos de dato a funciones anonimas
@@ -484,7 +485,7 @@ EXPRESION_G
     | OP_Decremento CONTENIDO_EXPRESION                                                     {$$ = expresionB(undefined,'--',$2);}      
     | OP_Incremento CONTENIDO_EXPRESION                                                     {$$ = expresionB(undefined,'++',$2);}      
     | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                        {$$ = expresionB(undefined,'-' ,$2);}      
-    | LOG_Not   EXPRESION     %prec UMINUS                                                  {$$ = expresionB(undefined,'!' ,$2);} 
+    | LOG_Not   EXPRESION_G     %prec UMINUS                                                {$$ = expresionB(undefined,'!' ,$2);} 
     | CONTENIDO_EXPRESION                                                                   
 ;
 
@@ -494,6 +495,7 @@ EXPRESION_G
     | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                      
     | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
     | Cadena                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
+    | R_Null                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "NULL" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
     | Cadena MET_STRING     /*Metodos string*/
     | ATRIBUTOS MET_STRING    /*Metodos string*/                                                                             
     | Identificador S_ParentesisAbre S_ParentesisCierra                                     {$$ = {tipo : "LLAMADA_F" , identificador : $1 , parametros : [] , fila : this._$.first_line, columna: this._$.first_column};}

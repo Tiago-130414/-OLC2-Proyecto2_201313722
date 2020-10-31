@@ -1,7 +1,7 @@
 //FUNCION PRINCIPAL LLAMADA DESDE PAGINA (AYUDA A GENERAR CODIGO INTERMEDIO Y LOS ERRORES EN DICHO CODIGO)
-function generarIntermedio() {
-  var cod = Codigo.getValue();
-  var json = Traduccion.parse(cod);
+function generarIntermedio(traduccion) {
+  //var cod = Codigo.getValue();
+  var json = Traduccion.parse(traduccion);
   if (json.err.length > 0) {
     //adjuntando errores lexicos y sintacticos antes de encontrar los semanticos
     erroresCI = erroresCI.concat(json.err);
@@ -10,11 +10,7 @@ function generarIntermedio() {
   agregarAmbito("GLOBAL");
   generate(json.jsonInt);
   eliminarA();
-  //luego de generar el codigo valido se reportan los errores
-  if (erroresCI.length > 0) {
-    generarTablasErrores(erroresCI, "Codigo Intermedio");
-    erroresCI = [];
-  }
+  //console.log(generarCodigo3DCadena("prueba"));
 }
 
 //ESTE METODO ES PARA RECORRER EL JSON GENERADO DESDE TRADUCCION.JISON
@@ -37,18 +33,15 @@ function generarImprimir(element) {
   } else {
     exp = element;
   }
-  console.log(exp);
-  var result = leerExpresion(exp);
 
+  var result = leerExpresion(exp);
   if (result.tipo != "Error Semantico") {
     if (result.tipo == "C3D") {
       console.log(result);
-      //codigo3D.push(result);
-      //console.log(codigo3D);
+      imprimirC3(result.codigo3d);
       limpiar();
     }
   } else {
-    //console.log(result);
     erroresCI.push(result);
   }
 }
@@ -83,4 +76,25 @@ function leerExpresion(expresion) {
   } else if (expresion.tipo == "VALOR") {
     return expresion;
   }
+}
+
+function imprimirC3(v) {
+  var cad = "";
+  console.log(v);
+  for (var element of v) {
+    if (element.tipo == "C3D") {
+      cad +=
+        element.etiqueta +
+        " = " +
+        element.opIzq +
+        " " +
+        element.operacion +
+        " " +
+        element.opDer +
+        ";\n";
+    } else if (element.tipo == "LLC3D") {
+      cad += element.id + "( " + element.etiqueta + " );\n";
+    }
+  }
+  TraduccionTP.setValue(cad);
 }

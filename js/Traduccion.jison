@@ -12,8 +12,8 @@
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] {/*comentario multilinea*/}
 
 /*  CADENAS  */
-[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  return 'Cadena'; }
-[\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {  return 'Cadena'; }
+[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
+[\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
 /*TIPOS DE DATOS*/
 
 "number"                                            {  return 'T_Number';  }
@@ -55,7 +55,6 @@
 "true"                                              {return 'R_True';}    
 "false"                                             {return 'R_False';}
 "undefined"                                         {return 'R_Undefined';}
-"graficar_ts"                                       {return 'R_Graficar';}
 
 /*  EXPRESION */
 
@@ -490,10 +489,10 @@ EXPRESION_G
 ;
 
  CONTENIDO_EXPRESION
-    : Entero                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "NUMERO" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                     
-    | Decimal                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "NUMERO", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}    
-    | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                      
-    | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
+    : Entero                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "ENTERO" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                     
+    | Decimal                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "DECIMAL", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}    
+    | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor:  1,fila: this._$.first_line , columna: this._$.first_column};}                                      
+    | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor:  0,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
     | Cadena                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
     | R_Null                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "NULL" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
     | Cadena MET_STRING     /*Metodos string*/

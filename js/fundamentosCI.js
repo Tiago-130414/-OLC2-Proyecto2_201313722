@@ -31,7 +31,9 @@ function rTemporal() {
 }
 
 function rTActual() {
-  return "T" + temporal;
+  var t = temporal - 1;
+  console.log(temporal);
+  return "T" + t;
 }
 //////////////////////////////////////////////RETORNAR LABEL
 function rLabel() {

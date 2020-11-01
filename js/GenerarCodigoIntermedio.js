@@ -72,6 +72,10 @@ function leerExpresion(expresion) {
   ) {
     return operacionesLogicas(expresion);
   } else if (expresion.tipo == "PRIMITIVO") {
+    //SI ES BOOLEANO PASAR A MINUSCULA TODAS SUS LETRAS
+    if (expresion.tipoDato == "BOOLEAN") {
+      expresion.valor = expresion.valor.toLowerCase();
+    }
     return expresion;
   } else if (expresion.tipo == "VALOR") {
     return expresion;
@@ -83,17 +87,27 @@ function imprimirC3(v) {
   console.log(v);
   for (var element of v) {
     if (element.tipo == "C3D") {
+      cad += element.etiqueta + " = ";
+      if (element.opIzq != undefined) {
+        cad += element.opIzq + " ";
+      }
+      cad += element.operacion + " ";
+      if (element.opDer != undefined) {
+        cad += element.opDer;
+      }
+      cad += ";\n";
+    } else if (element.tipo == "LLC3D") {
+      cad += element.id + "( " + element.etiqueta + " );\n";
+    } else if (element.tipo == "LLC3DPOT") {
       cad +=
         element.etiqueta +
         " = " +
-        element.opIzq +
-        " " +
-        element.operacion +
-        " " +
-        element.opDer +
-        ";\n";
-    } else if (element.tipo == "LLC3D") {
-      cad += element.id + "( " + element.etiqueta + " );\n";
+        element.id +
+        "(" +
+        element.base +
+        "," +
+        element.expo +
+        ");\n";
     }
   }
   TraduccionTP.setValue(cad);

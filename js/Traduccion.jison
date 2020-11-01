@@ -127,6 +127,10 @@
     function limpiarErrores(){
         tablaErrores = [];
     }
+
+    function UND(td){
+        return {tipo : "PRIMITIVO" , tipoDato : td , valor:""};
+    }
 %}
 
 //PRECEDENCIA DE OPERADORES
@@ -483,16 +487,16 @@ EXPRESION_G
     | CONTENIDO_EXPRESION OP_Incremento %prec PRUEBA                                        {$$ = expresionB($1,'++',undefined);}     
     | OP_Decremento CONTENIDO_EXPRESION                                                     {$$ = expresionB(undefined,'--',$2);}      
     | OP_Incremento CONTENIDO_EXPRESION                                                     {$$ = expresionB(undefined,'++',$2);}      
-    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                        {$$ = expresionB(undefined,'-' ,$2);}      
-    | LOG_Not   EXPRESION_G     %prec UMINUS                                                {$$ = expresionB(undefined,'!' ,$2);} 
+    | OP_Menos  CONTENIDO_EXPRESION     %prec UMINUS                                        {$$ = expresionB(UND("ENTERO"),'-',$2);}      
+    | LOG_Not   EXPRESION_G     %prec UMINUS                                                {$$ = expresionB(UND("BOOLEAN"),'!' ,$2);} 
     | CONTENIDO_EXPRESION                                                                   
 ;
 
  CONTENIDO_EXPRESION
     : Entero                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "ENTERO" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                     
     | Decimal                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "DECIMAL", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}    
-    | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor:  1,fila: this._$.first_line , columna: this._$.first_column};}                                      
-    | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor:  0,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
+    | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                      
+    | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
     | Cadena                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
     | R_Null                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "NULL" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
     | Cadena MET_STRING     /*Metodos string*/

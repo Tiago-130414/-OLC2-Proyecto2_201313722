@@ -5,35 +5,10 @@
 function operacionesAritmeticas(element) {
   var opI = leerExpresion(element.OpIzq);
   var opD = leerExpresion(element.OpDer);
-  var c3 = [];
-
-  //AQUI SE CONCATENA EL CODIGO DE 3 DIRECCIONES DE LADO IZQUIERDO
-  if (opI.tipo == "C3D") {
-    if (opI.codigo3d != undefined) {
-      c3 = opI.codigo3d;
-    } else {
-      c3.push(opI);
-    }
-  }
-
-  //AQUI SE CONCATENA EL CODIGO DE 3 DIRECCIONES DE LADO DERECHO
-  if (opD.tipo == "C3D") {
-    if (opD.codigo3d != undefined) {
-      c3 = c3.concat(opD.codigo3d);
-    } else {
-      c3.push(opD);
-    }
-  }
   //AQUI SE COMIENZAN A EVALUAR CADA OPERACION SEGUN SU SIMBOLO
   if (element.tipo == "+") {
     var p = evaluarSuma(opI, opD);
-    if (p.tipo != "Error Semantico") {
-      c3 = c3.concat(p.codigo3d);
-      return p;
-      //gC3D(p.tipoDato, p.etiqueta, c3)
-    } else {
-      return p;
-    }
+    return p;
   } else if (
     element.tipo == "-" ||
     element.tipo == "*" ||
@@ -41,20 +16,12 @@ function operacionesAritmeticas(element) {
     element.tipo == "%"
   ) {
     var p = evaluarAritmetica(opI, opD, element.tipo);
-    c3.push(p);
-    if (p.tipo != "Error Semantico") {
-      return gC3D(p.tipoDato, p.etiqueta, c3);
-    } else {
-      return p;
-    }
+    return p;
   } else if (element.tipo == "**") {
     var p = evaluarPotencia(opI, opD);
-    c3.push(p);
-    if (p.tipo != "Error Semantico") {
-      return gC3D(p.tipoDato, p.etiqueta, c3);
-    } else {
-      return p;
-    }
+    return p;
+  } else if (element.tipo == "-#") {
+    console.log(element);
   }
 }
 //VERIFICACION DE TIPOS SUMA
@@ -97,10 +64,10 @@ function evaluarSuma(opI, opD) {
 //TODAS LAS OPEERACIONES MENOS POTENCIA
 function evaluarAritmetica(opI, opD, op) {
   if (
-    (opI.tipoDato == "ENTERO" && opD.tipoDato == "ENTERO") ||
-    (opI.tipoDato == "DECIMAL" && opD.tipoDato == "DECIMAL")
+    (opI.tipoDato == "ENTERO" || opI.tipoDato == "DECIMAL") &&
+    (opD.tipoDato == "ENTERO" || opD.tipoDato == "DECIMAL")
   ) {
-    return gC3Doperacion(opI, opD, op);
+    return generarCodigo(opI, opD, op);
   } else {
     if (opI.tipoDato != "ENTERO" || opI.tipoDato != "DECIMAL") {
       return gError(
@@ -120,7 +87,7 @@ function evaluarAritmetica(opI, opD, op) {
 //POTENCIA
 function evaluarPotencia(opI, opD) {
   if (opI.tipoDato == "ENTERO" && opD.tipoDato == "ENTERO") {
-    return gC3Doperacion(opI, opD, "**");
+    return generarCodigo(opI, opD, "**");
   } else {
     if (opI.tipoDato != "ENTERO") {
       return gError(
@@ -141,21 +108,6 @@ function evaluarPotencia(opI, opD) {
 function operacionesRelacionales(element) {
   var opI = leerExpresion(element.OpIzq);
   var opD = leerExpresion(element.OpDer);
-  var c3 = [];
-  if (opI.tipo == "C3D") {
-    if (opI.codigo3d != undefined) {
-      c3 = opI.codigo3d;
-    } else {
-      c3.push(opI);
-    }
-  }
-  if (opD.tipo == "C3D") {
-    if (opD.codigo3d != undefined) {
-      c3 = c3.concat(opD.codigo3d);
-    } else {
-      c3.push(opD);
-    }
-  }
 
   if (
     element.tipo == ">=" ||
@@ -164,20 +116,10 @@ function operacionesRelacionales(element) {
     element.tipo == "<"
   ) {
     var p = evaluarRelacionales(opI, opD, element.tipo);
-    c3.push(p);
-    if (p.tipo != "Error Semantico") {
-      return gC3D(p.tipoDato, p.etiqueta, c3);
-    } else {
-      return p;
-    }
+    return p;
   } else if (element.tipo == "==" || element.tipo == "!=") {
     var p = evaluarID(opI, opD, element.tipo);
-    c3.push(p);
-    if (p.tipo != "Error Semantico") {
-      return gC3D(p.tipoDato, p.etiqueta, c3);
-    } else {
-      return p;
-    }
+    return p;
   } else {
     if (opI.tipo == "Error Semantico") {
       return opI;
@@ -192,7 +134,7 @@ function evaluarRelacionales(opI, opD, op) {
     (opI.tipoDato == "ENTERO" || opI.tipoDato == "DECIMAL") &&
     (opD.tipoDato == "ENTERO" || opD.tipoDato == "DECIMAL")
   ) {
-    return gC3Doperacion(opI, opD, op);
+    return generarCodigo(opI, opD, op);
   } else {
     if (opI.tipoDato != "ENTERO" || opI.tipoDato != "DECIMAL") {
       return gError(
@@ -212,12 +154,12 @@ function evaluarRelacionales(opI, opD, op) {
 //EVALUA IGUALDAD O DIFERENCIACION
 function evaluarID(opI, opD, op) {
   if (opI.tipoDato == opD.tipoDato) {
-    return gC3Doperacion(opI, opD, op);
+    return generarCodigo(opI, opD, op);
   } else if (
     (opI.tipoDato == "CADENA" && opD.tipoDato == "NULL") ||
     (opI.tipoDato == "NULL" && opD.tipoDato == "CADENA")
   ) {
-    return gC3Doperacion(opI, opD, op);
+    return generarCodigo(opI, opD, op);
   } else {
     return {
       tipo: "Error Semantico",
@@ -232,54 +174,22 @@ function operacionesLogicas(element) {
   //BUSCANDO TIPO DE OPERACION PARA PODER EVALUARLA
   if (element.tipo == "!") {
     //OBTENIENDO OPERADOR
+    var opI = leerExpresion(element.OpIzq);
     var opD = leerExpresion(element.OpDer);
-    var c3 = [];
-    //CONCATENANDO CODIGO DE 3 DIRECCIONES
-    if (opD.tipo == "C3D") {
-      if (opD.codigo3d != undefined) {
-        c3 = c3.concat(opD.codigo3d);
-      } else {
-        c3.push(opD);
-      }
-    }
+
     if (opD.tipo != "Error Semantico") {
       var p = evaluarLogica(opI, opD, element.tipo);
-      c3.push(p);
-      if (p.tipo != "Error Semantico") {
-        return gC3D(p.tipoDato, p.etiqueta, c3);
-      } else {
-        return p;
-      }
+      return p;
     } else {
       return opD;
     }
   } else {
     var opI = leerExpresion(element.OpIzq);
     var opD = leerExpresion(element.OpDer);
-    var c3 = [];
-    if (opI.tipo == "C3D") {
-      if (opI.codigo3d != undefined) {
-        c3 = opI.codigo3d;
-      } else {
-        c3.push(opI);
-      }
-    }
-    if (opD.tipo == "C3D") {
-      if (opD.codigo3d != undefined) {
-        c3 = c3.concat(opD.codigo3d);
-      } else {
-        c3.push(opD);
-      }
-    }
 
     if (opI.tipo != "Error Semantico" && opD.tipo != "Error Semantico") {
       var p = evaluarLogica(opI, opD, element.tipo);
-      c3.push(p);
-      if (p.tipo != "Error Semantico") {
-        return gC3D(p.tipoDato, p.etiqueta, c3);
-      } else {
-        return p;
-      }
+      return p;
     } else {
       if (opI.tipo == "Error Semantico") {
         return opI;
@@ -293,7 +203,7 @@ function operacionesLogicas(element) {
 function evaluarLogica(opI, opD, op) {
   if (op == "!") {
     if (opD.tipoDato == "BOOLEAN") {
-      return gC3Doperacion(undefined, opD, op);
+      return generarCodigo(opI, opD, op);
     } else {
       return gError(
         "valor incompatible con operacion " + op,
@@ -303,7 +213,7 @@ function evaluarLogica(opI, opD, op) {
     }
   } else {
     if (opI.tipoDato == "BOOLEAN" && opD.tipoDato == "BOOLEAN") {
-      return gC3Doperacion(opI, opD, op);
+      return generarCodigo(opI, opD, op);
     } else {
       if (opI.tipoDato != "BOOLEAN") {
         return gError(
@@ -361,19 +271,29 @@ function vT(ele) {
     return ele.valor;
   }
 }
-
 //GENERA EL CODIGO DE 3 DIRECCIONES PARA UNA OPERACION BINARIA
 function gC3Doperacion(opI, opD, ope) {
+  if (ope == "!") {
+    var tpD = inferirTipo("", opD.tipoDato, ope);
+    return {
+      tipo: "C3D",
+      tipoDato: tpD,
+      etiqueta: rTemporal(),
+      opIzq: undefined,
+      opDer: castearBoo(tpD, vT(opD)),
+      operacion: ope,
+    };
+  }
+  var tpD = inferirTipo(opI.tipoDato, opD.tipoDato, ope);
   return {
     tipo: "C3D",
-    tipoDato: inferirTipo(opI.tipoDato, opD.tipoDato, ope),
+    tipoDato: tpD,
     etiqueta: rTemporal(),
-    opIzq: vT(opI),
-    opDer: vT(opD),
+    opIzq: castearBoo(tpD, vT(opI)),
+    opDer: castearBoo(tpD, vT(opD)),
     operacion: ope,
   };
 }
-
 //ERRORES SEMANTICOS
 function gError(desc, fil, col) {
   return {
@@ -387,7 +307,7 @@ function gError(desc, fil, col) {
 function gC3D(td, et, vec) {
   return { tipo: "C3D", tipoDato: td, etiqueta: et, codigo3d: vec };
 }
-
+//FUNCION QUE GENERA EL CODIGO DE 3 DIRECCIONES PARA TODAS LAS OPERACIONES ARITMETICAS, LOGICAS, RELACIONALES Y UNARIAS
 function generarCodigo(opI, opD, op) {
   var etiq;
   var codI = [];
@@ -395,14 +315,15 @@ function generarCodigo(opI, opD, op) {
   var cod3d = [];
   var cIz = [];
   var cDer = [];
-  if (opI.tipo == "C3D" && opI != undefined) {
-    if (opI.tipoDato == "CADENA") {
+  var tpD;
+  if (opI != undefined && opI.tipo == "C3D") {
+    if (opI.tipoDato == "CADENA" && op == "+") {
       opI.codigo3d.pop();
     }
     cIz = opI.codigo3d;
   }
 
-  if (opD.tipo == "C3D" && opD != undefined) {
+  if (opD != undefined && opD.tipo == "C3D") {
     cDer = opD.codigo3d;
   }
 
@@ -412,26 +333,38 @@ function generarCodigo(opI, opD, op) {
     cod3d = cod3d.concat(cIz, cDer);
   }
 
-  var tpD = inferirTipo(opI.tipoDato, opD.tipoDato, op);
+  tpD = inferirTipo(opI.tipoDato, opD.tipoDato, op);
 
-  if (op == "+" && tpD == "CADENA") {
-    if (opI.tipo == "PRIMITIVO" || opI.tipo == "VALOR") {
+  //SE VERIFICAN LAS OPERACIONES PARA GENERAR SU CODIGO DE 3 DIRECCIONES
+  if (op == "+") {
+    if (tpD == "CADENA") {
+      if (opI.tipo == "PRIMITIVO" || opI.tipo == "VALOR") {
+        etiq = rTemporal();
+        codI.push(generoC3(etiq, "h", "", ""));
+        codI.push(generoC3("h", "h", 1, "+"));
+        codI = codI.concat(generarCodigo3Direcciones(opI));
+      } else {
+        etiq = opI.etiqueta;
+      }
+
+      if (opD.tipo == "PRIMITIVO" || opD.tipo == "VALOR") {
+        codD = codD.concat(generarCodigo3Direcciones(opD));
+      } else {
+        codD.push(gLL("cc", opD.etiqueta));
+      }
+      cod3d = cod3d.concat(codI, codD);
+      cod3d.push(generoC3("heap[(int)" + etiq + "]", "h", etiq, "-"));
+    } else if (tpD == "DECIMAL" || tpD == "ENTERO") {
       etiq = rTemporal();
-      codI.push(generoC3(etiq, "h", "", ""));
-      codI.push(generoC3("h", "h", 1, "+"));
-      codI = codI.concat(generarCodigo3Direcciones(opI));
-    } else {
-      etiq = opI.etiqueta;
+      cod3d.push({
+        tipo: "C3D",
+        etiqueta: etiq,
+        opIzq: castearBoo(tpD, vT(opI)),
+        opDer: castearBoo(tpD, vT(opD)),
+        operacion: op,
+      });
     }
-
-    if (opD.tipo == "PRIMITIVO" || opD.tipo == "VALOR") {
-      codD = codD.concat(generarCodigo3Direcciones(opD));
-    } else {
-      codD.push(gLL("cc", opD.etiqueta));
-    }
-    cod3d = cod3d.concat(codI, codD);
-    cod3d.push(generoC3("heap[(int)" + etiq + "]", "h", etiq, "-"));
-  } else if (tpD == "DECIMAL" || tpD == "ENTERO") {
+  } else if (op == "-" || op == "*" || op == "/" || op == "%") {
     etiq = rTemporal();
     cod3d.push({
       tipo: "C3D",
@@ -440,6 +373,54 @@ function generarCodigo(opI, opD, op) {
       opDer: vT(opD),
       operacion: op,
     });
+  } else if (op == "**") {
+    etiq = rTemporal();
+    cod3d.push(gLLP(etiq, vT(opI), vT(opD)));
+  } else if (op == ">" || op == ">=" || op == "<" || op == "<=") {
+    etiq = rTemporal();
+    cod3d.push({
+      tipo: "C3D",
+      etiqueta: etiq,
+      opIzq: vT(opI),
+      opDer: vT(opD),
+      operacion: op,
+    });
+  } else if (op == "==" || op == "!=") {
+    if (opI.tipoDato == "CADENA" && opD.tipoDato == "CADENA") {
+      var etiq1 = ""; //izquierdo
+      var etiq2 = ""; //derecho
+      //LADO IZQUIERDO
+      if (opI.tipo == "VALOR") {
+        etiq1 = rTemporal();
+        codI = c3dCadena(opI, etiq1);
+      } else {
+        etiq1 = opI.etiqueta;
+      }
+      //LADO DERECHO
+      if (opD.tipo == "VALOR") {
+        etiq2 = rTemporal();
+        codD = c3dCadena(opD, etiq2);
+      } else {
+        etiq2 = opD.etiqueta;
+      }
+      cod3d = cod3d.concat(codI, codD);
+      etiq = rTemporal();
+      cod3d.push(generoC3(etiq, etiq1, etiq2, op));
+    } else if (
+      (opI.tipoDato == "ENTERO" && opD.tipoDato == "ENTERO") ||
+      (opI.tipoDato == "DECIMAL" && opD.tipoDato == "DECIMAL") ||
+      (opI.tipoDato == "BOOLEAN" && opD.tipoDato == "BOOLEAN")
+    ) {
+      etiq = rTemporal();
+      cod3d.push(gC3Doperacion(opI, opD, op));
+    }
+  } else if (op == "&&" || op == "||") {
+    etiq = rTemporal();
+    cod3d.push(gC3Doperacion(opI, opD, op));
+  } else if (op == "!") {
+    var c = gC3Doperacion("", opD, op);
+    etiq = c.etiqueta;
+    cod3d.push(c);
   }
   return gC3D(tpD, etiq, cod3d);
 }
@@ -476,6 +457,16 @@ function generarCodigo3DCadena(cad) {
 function gLL(ll, etiq) {
   return { tipo: "LLC3D", id: ll, etiqueta: etiq };
 }
+//FUNCION QUE GENERA JSON PARA FUNCION DE POTENCIA
+function gLLP(etiq, par1, par2) {
+  return {
+    tipo: "LLC3DPOT",
+    etiqueta: etiq,
+    id: "pow",
+    base: par1,
+    expo: par2,
+  };
+}
 //FUNCION QUE GENERA JSON CON PLANTILLA PARA RETORNAR CODIGO DE 3 DIRECCIONES
 function generoC3(et, opI, opD, op) {
   return {
@@ -485,4 +476,41 @@ function generoC3(et, opI, opD, op) {
     opDer: opD,
     operacion: op,
   };
+}
+//FUNCION QUE RETORNA EL
+function castearBoo(tD, val) {
+  if (tD == "CADENA") {
+    if (val == "true") {
+      return "true";
+    } else if (val == "false") {
+      return "false";
+    } else {
+      return val;
+    }
+  } else if (tD == "ENTERO" || tD == "DECIMAL") {
+    if (val == "true") {
+      return 1;
+    } else if (val == "false") {
+      return 0;
+    } else {
+      return val;
+    }
+  } else if (tD == "BOOLEAN") {
+    if (val == "true") {
+      return 1;
+    } else if (val == "false") {
+      return 0;
+    } else {
+      return val;
+    }
+  }
+}
+//FUNCION QUE RETORNA CODIGO DE 3 DIRECCIONES DE CADENA
+function c3dCadena(op, etiq) {
+  var cod = [];
+  cod.push(generoC3(etiq, "h", "", ""));
+  cod.push(generoC3("h", "h", 1, "+"));
+  cod = cod.concat(generarCodigo3Direcciones(op));
+  cod.push(generoC3("heap[(int)" + etiq + "]", "h", etiq, "-"));
+  return cod;
 }

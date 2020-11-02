@@ -1,6 +1,5 @@
 /*ESTE ARCHIVO SERVIRA PARA GENERAR LAS OPERACIONES ARITMETICAS, LOGICAS Y RELACIONALES*/
 /* Se realizara la debida comprobacion de tipos y se generaran el codigo de 3 direcciones */
-
 //OPERACIONES ARITMETICAS
 function operacionesAritmeticas(element) {
   var opI = leerExpresion(element.OpIzq);
@@ -171,31 +170,18 @@ function evaluarID(opI, opD, op) {
 }
 //EVALUA OPERACIONES LOGICAS
 function operacionesLogicas(element) {
-  //BUSCANDO TIPO DE OPERACION PARA PODER EVALUARLA
-  if (element.tipo == "!") {
-    //OBTENIENDO OPERADOR
-    var opI = leerExpresion(element.OpIzq);
-    var opD = leerExpresion(element.OpDer);
-
-    if (opD.tipo != "Error Semantico") {
-      var p = evaluarLogica(opI, opD, element.tipo);
-      return p;
+  //OBTENIENDO OPERADORES
+  var opI = leerExpresion(element.OpIzq);
+  var opD = leerExpresion(element.OpDer);
+  //SI NO HAY ERRORES SE EVALUA LA OPERACION LOGICA
+  if (opI.tipo != "Error Semantico" && opD.tipo != "Error Semantico") {
+    var p = evaluarLogica(opI, opD, element.tipo);
+    return p;
+  } else {
+    if (opI.tipo == "Error Semantico") {
+      return opI;
     } else {
       return opD;
-    }
-  } else {
-    var opI = leerExpresion(element.OpIzq);
-    var opD = leerExpresion(element.OpDer);
-
-    if (opI.tipo != "Error Semantico" && opD.tipo != "Error Semantico") {
-      var p = evaluarLogica(opI, opD, element.tipo);
-      return p;
-    } else {
-      if (opI.tipo == "Error Semantico") {
-        return opI;
-      } else {
-        return opD;
-      }
     }
   }
 }
@@ -334,7 +320,6 @@ function generarCodigo(opI, opD, op) {
   }
 
   tpD = inferirTipo(opI.tipoDato, opD.tipoDato, op);
-
   //SE VERIFICAN LAS OPERACIONES PARA GENERAR SU CODIGO DE 3 DIRECCIONES
   if (op == "+") {
     if (tpD == "CADENA") {

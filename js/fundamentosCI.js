@@ -9,8 +9,15 @@ let etiqueta = 0;
 
 ///////////////////////////////////////////////AGREGAR AMBITO
 function agregarAmbito(nombre) {
-  ambitos.push([]);
-  nombAmbitos.push(nombre);
+  ambitos.push({ Nombre: nombre, Inicio: 0, CantidadE: 0, DatosAmbito: [] });
+}
+///////////////////////////////////////////////INSERTAR VALOR EN EL AMBITO ACTUAL
+function insertarAmbito(nValor) {
+  var json = ambitos[ambitos.length - 1].DatosAmbito;
+  console.log(json);
+  json.push(nValor);
+  console.log(json);
+  console.log(ambitos);
 }
 //////////////////////////////////////////////ELMINAR AMBITO
 function eliminarA() {

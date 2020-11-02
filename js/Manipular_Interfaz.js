@@ -1,7 +1,7 @@
 function traducir() {
   var texto = Codigo.getValue();
   var tr = DesanidarFuncion.parse(texto);
-  TraduccionTP.setValue(tr.traduccion);
+  //TraduccionTP.setValue(tr.traduccion);
   //console.log(tr.errores);
   if (tr.errores.length > 0) {
     erroresCI = erroresCI.concat(tr.errores);

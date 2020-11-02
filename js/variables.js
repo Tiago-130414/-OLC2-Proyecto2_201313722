@@ -6,10 +6,10 @@ function declaracion(elemento, mod) {
     }
   }
 }
-
+//METODO QUE DECLARA LAS VARIABLES
 function declaracionVariables(elemento, mod) {
   //console.log(typeof mod);
-  console.log(elemento);
+  //console.log(elemento);
   if (!buscarVariable(elemento.identificador)) {
     //CUANDO ES UNA CONSTANTE
     if (mod.toLowerCase() == "const") {
@@ -17,10 +17,21 @@ function declaracionVariables(elemento, mod) {
         var exp = leerExpresion(elemento.valor[0]);
         if (exp.tipo != "Error Semantico") {
           //SI ES UNA EXPRESION VALIDA SE VERIFICAN LOS TIPOS
-          if (elemento.tipoDato == exp.tipoDato) {
+          exp.tipoDato = cambiarTNumber(exp.tipoDato);
+          if (elemento.tipoDato.toLowerCase() == exp.tipoDato.toLowerCase()) {
             console.log("ASIGNACION VALIDA");
+            insertarAmbito("va");
           } else {
-            console.log("ASIGNACION INVALIDA");
+            //CUANDO LOS TIPOS NO COINCIDEN
+            //console.log("ASIGNACION INVALIDA");
+            erroresCI.push({
+              tipo: "Error Semantico",
+              Error:
+                "El tipo de dato del valor asignado a la constante no coincide con el tipo de constante -> " +
+                elemento.identificador,
+              Fila: elemento.fila,
+              Columna: elemento.columna,
+            });
           }
         } else {
           //SI LA EXPRESION ES INVALIDA
@@ -51,19 +62,30 @@ function declaracionVariables(elemento, mod) {
     });
   }
 }
-
 //BUSCAR VARIABLE PARA DECLARACION
 function buscarVariable(idV) {
   var i = ambitos.length - 1;
-  for (var element of ambitos[i]) {
-    console.log(element);
-    if (element.identificador == idV) {
+  for (var element of ambitos[i].DatosAmbito) {
+    if (element.identificador.toLowerCase() == idV.toLowerCase()) {
       return true;
     }
   }
   return false;
 }
-
 //FUNCION QUE INICIALIZA VARIABLE
-
-function inicializarVariable(tipo) {}
+function inicializarVariable(tipo) {
+  if (tipo == "NUMBER") {
+    return 0;
+  } else if (tipo == "BOOLEAN") {
+    return "false";
+  } else if (tipo == "CADENA") {
+    return "null";
+  }
+}
+//FUNCION QUE RETORNA TIPO NUMBER EN DADO CASO SEA TIPO DECIMAL O ENTERO LA EXPRESION
+function cambiarTNumber(tp) {
+  if (tp == "ENTERO" || tp == "DECIMAL") {
+    return "NUMERO";
+  }
+  return tp;
+}

@@ -1,4 +1,4 @@
-/* descripcion: ANALIZADOR DEL LENGUAJE JAVA */
+/* descripcion: ANALIZADOR DEL LENGUAJE TYPESCRIPT */
 // segmento de codigo, importaciones y todo dentro de 
 %{
     var tablaErrores = [];
@@ -12,8 +12,8 @@
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] {/*comentario multilinea*/}
 
 /*  CADENAS  */
-[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {  return 'Cadena'; }
-[\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {  return 'Cadena'; }
+[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
+[\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
 
 
 /*TIPOS DE DATOS*/
@@ -166,8 +166,8 @@ CONTENIDO : FUNCIONES                                       {$$ = {Nombre:"CONTE
           |  error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
-FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                                            {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7]};}
-          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre EDD S_LlaveCierra                  {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7,$9]};}
+FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra                                            {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7]};}
+          | R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_DosPuntos TIPOS_DE_DATO S_LlaveAbre CONT S_LlaveCierra                  {$$ = {Nombre:"FUNCIONES",vector:[{Nombre:$2,vector :[]},$4,$7,$9]};}
 ;
 /*---------------------------------------------LISTADO DE ESTRUCTURAS DE CONTROL---------------------------------------------------------*/
 EDD:LISTADO_ESTRUCTURAS                                                 {$$ = $1;}

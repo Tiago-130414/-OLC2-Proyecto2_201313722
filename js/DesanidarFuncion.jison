@@ -12,8 +12,8 @@
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] {/*comentario multilinea*/}
 
 /*  CADENAS  */
-[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            { return 'Cadena'; }
-[\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            { return 'Cadena'; }
+[\"][^\\\"]*([\\][\\\"'ntr][^\\\"]*)*[\"]            { return 'Cadena'; }
+[\'][^\\\']*([\\][\\\'"ntr][^\\\']*)*[\']            { return 'Cadena'; }
 
 
 /*TIPOS DE DATOS*/
@@ -712,7 +712,7 @@ DEFINIR_DEFAULT: R_Default S_DosPuntos EDD                                      
                |                                                                    {$$ = [];}
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
-IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa {$$ = {tipo : "imprimir" , contenido : $5 };}
+IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa {$$ = {tipo : "imprimir" , contenido : $5 };}
 ;
 
 FUNC: EXPRESION_G       {var json; if(Array.isArray($1)){json = $1;}else{json = [$1];};$$ = json;}

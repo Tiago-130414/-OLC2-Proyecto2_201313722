@@ -1,4 +1,4 @@
-var Consola = CodeMirror.fromTextArea(document.getElementById("salidaTxt"), {
+/*var Consola = CodeMirror.fromTextArea(document.getElementById("salidaTxt"), {
   theme: "material-palenight",
   lineNumbers: true,
   smartIndent: true,
@@ -8,7 +8,7 @@ var Consola = CodeMirror.fromTextArea(document.getElementById("salidaTxt"), {
   hint: true,
 });
 Consola.setSize("1100", "400");
-
+*/
 var TraduccionTP = CodeMirror.fromTextArea(
   document.getElementById("traduccion"),
   {

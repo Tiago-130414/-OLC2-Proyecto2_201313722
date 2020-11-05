@@ -12,10 +12,10 @@
 [/][*][^*]*[*]+([^/*][^*]*[*]+)*[/] {/*comentario multilinea*/}
 
 /*  CADENAS  */
-[\"][^\\\"]*([\\][\\\"ntr][^\\\"]*)*[\"]            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
-[\'][^\\\']*([\\][\\\'ntr][^\\\']*)*[\']            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
-/*TIPOS DE DATOS*/
+[\"][^\\\"]*([\\][\\\"'ntr][^\\\"]*)*[\"]            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
+[\'][^\\\']*([\\][\\\'"ntr][^\\\']*)*[\']            {yytext = yytext.substr(1,yyleng-2);  return 'Cadena'; }
 
+/*TIPOS DE DATOS*/
 "number"                                            {  return 'T_Number';  }
 "boolean"                                           {  return 'T_Boolean'; }
 "string"                                            {  return 'T_String';  }
@@ -239,7 +239,7 @@ DEFINIR_DEFAULT: R_Default S_DosPuntos EDD
                |                                                                    
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
-IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre FUNC S_ParentesisCierra S_PuntoComa                  {$$ = {tipo : "IMPRIMIR" , instruccion: "CONSOLE", contenido: $5};}
+IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa                  {$$ = {tipo : "IMPRIMIR" , instruccion: "CONSOLE", contenido: $5};}
 ;
 
 FUNC: EXPRESION_G                       {var arr;if(Array.isArray($1)){arr = $1;}else{arr = [$1];} ;$$ = arr;}
@@ -392,11 +392,10 @@ LLAMADA_FUNC
 ;
 
 PARAMETROS_FUNC
-    : PARAMETROS_FUNC S_Coma EXPRESION_G                                    
-    | EXPRESION_G                                                           
-    |                                                                      
+    : PARAMETROS_FUNC S_Coma EXPRESION_G        {var exp; var arr;if(Array.isArray($3)){arr = $3;}else{arr = [$3];}; exp = $1.concat(arr);$$ = exp;}
+    | EXPRESION_G                               {var arr;if(Array.isArray($1)){arr = $1;}else{arr = [$1];};$$ = arr;}                                               
+    |                                           {$$ = [];}                           
 ;
-
 /*---------------------------------------------PARAMETROS---------------------------------------------------------*/
 PARAM: LISTA_PARAMETROS
      |                                                  

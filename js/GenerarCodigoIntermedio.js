@@ -10,6 +10,7 @@ var posAmb = 0;
 
 //FUNCION PRINCIPAL LLAMADA DESDE PAGINA (AYUDA A GENERAR CODIGO INTERMEDIO Y LOS ERRORES EN DICHO CODIGO)
 function generarIntermedio(traduccion) {
+  TraduccionTP.setValue("");
   //var cod = Codigo.getValue();
   var json = Traduccion.parse(traduccion);
   if (json.err.length > 0) {
@@ -20,7 +21,8 @@ function generarIntermedio(traduccion) {
   agregarAmbito("GLOBAL");
   generate(json.jsonInt);
   eliminarA();
-  console.log(ambitos);
+  limpiar();
+  //console.log(ambitos);
   console.log(logAmbitos);
   //console.log(generarCodigo3DCadena("prueba"));
 }
@@ -47,23 +49,55 @@ function generate(json) {
 ////////////////////////////////////////FUNCION PARA IMPRIMIR ////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function generarImprimir(element) {
+  var cod3 = [];
+  var print = [];
   var exp;
-  if (Array.isArray(element)) {
-    exp = element[0];
-  } else {
-    exp = element;
-  }
-
-  var result = leerExpresion(exp);
-  if (result.tipo != "Error Semantico") {
-    if (result.tipo == "C3D") {
-      console.log(result);
-      imprimirC3(result.codigo3d);
-      limpiar();
+  for (var ele of element) {
+    //OBTENIENDO VALOR DE LA EXPRESION
+    exp = leerExpresion(ele);
+    if (exp.codigo3d != undefined) {
+      console.log("lei una expresion");
+      var cod = realizarPrint(exp);
+      cod3 = cod3.concat(cod.cod3);
+      print = print.concat(cod.pr);
+    } else {
+      //SI EL VALOR OBTENIDO DE LA EXPRESION ES PRIMITIVO
+      var vrT = verificarExpVU(exp); //VERIFICA LOS TIPOS SI ES PRIMITIVO Y SI SI RETORNA CODIGO DE 3 DIRECCIONES
+      //SI ES CODIGO DE 3 DIRECCIONES
+      if (vrT.tipo == "C3D") {
+        console.log(vrT);
+        var cod = realizarPrint(vrT);
+        cod3 = cod3.concat(cod.cod3);
+        print = print.concat(cod.pr);
+      } else {
+        if (vrT.tipo == "PRIMITIVO" && vrT.tipoDato == "NUMERO") {
+          print.push({ tipo: "PRINT", tipoDato: vrT.tipoDato, val: ele.valor });
+        }
+      }
     }
-  } else {
-    erroresCI.push(result);
   }
+  cod3 = cod3.concat(print);
+  imprimirC3(cod3);
+}
+
+function realizarPrint(ele) {
+  //console.log(ele);
+  var cod = [];
+  var print = [];
+  console.log(ele);
+  cod = cod.concat(ele.codigo3d);
+  if (ele.tipoDato == "CADENA" || ele.tipoDato == "BOOLEAN") {
+    print.push(gLL("impCad", ele.etiqueta));
+  } else if (ele.tipoDato == "NUMERO") {
+    print.push({ tipo: "PRINT", tipoDato: "NUMERO", val: ele.etiqueta });
+  } else if (ele.tipoDato == "ENTERO" || ele.tipoDato == "DECIMAL") {
+    print.push({
+      tipo: "PRINT",
+      tipoDato: ele.tipoDato,
+      val: ele.etiqueta,
+    });
+  }
+  return { cod3: cod, pr: print };
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -530,7 +564,7 @@ function generarCodigo3Direcciones(op) {
   ) {
     return [gLL("cNum", op.etiqueta)];
   } else if (op.tipoDato == "BOOLEAN" && op.tipo == "PRIMITIVO") {
-    return [gLL("cBool", op.valor)];
+    return [gLL("cBool", castearBoo("CADENA", op.valor))];
   } else if (op.tipoDato == "BOOLEAN" && op.tipo == "C3D") {
     return [gLL("cBool", op.etiqueta)];
   }
@@ -538,9 +572,51 @@ function generarCodigo3Direcciones(op) {
 //FUNCION QUE GENERA EL CODIGO DE 3 DIRECCIONES PARA UNA CADENA
 function generarCodigo3DCadena(cad) {
   var codCad = [];
+  var ascii = "";
   for (var i = 0; i < cad.length; i++) {
-    codCad.push(generoC3("heap[h]", cad.charCodeAt(i), "", ""));
-    codCad.push(generoC3("h", "h", 1, "+"));
+    ascii = cad.charCodeAt(i);
+    //SI ES DIAGONAL PARA VERIFICAR EL CARACTER ESPECIAL
+    if (ascii == "92") {
+      //SE OBTIENE EL ASCII SIGUENTE PARA SABER SI ES UN CARACTER ESPECIAL Y PODER UTILIZARLO
+      var asciiS = cad.charCodeAt(i + 1);
+      if (asciiS == 110) {
+        //SALTO DE LINEA
+        codCad.push(generoC3("heap[h]", 10, "", ""));
+        codCad.push(generoC3("h", "h", 1, "+"));
+        i++;
+      } else if (asciiS == 116) {
+        //TABULACION
+        codCad.push(generoC3("heap[h]", 9, "", ""));
+        codCad.push(generoC3("h", "h", 1, "+"));
+        i++;
+      } else if (asciiS == 114) {
+        //RETORNO DE CARRO
+        codCad.push(generoC3("heap[h]", 13, "", ""));
+        codCad.push(generoC3("h", "h", 1, "+"));
+        i++;
+      } else if (asciiS == 34) {
+        //COMILLA DOBLE
+        codCad.push(generoC3("heap[h]", 34, "", ""));
+        codCad.push(generoC3("h", "h", 1, "+"));
+        i++;
+      } else if (asciiS == 39) {
+        //COMILLA SIMPLE
+        codCad.push(generoC3("heap[h]", 39, "", ""));
+        codCad.push(generoC3("h", "h", 1, "+"));
+        i++;
+      } else if (asciiS == 92) {
+        //COMILLA SIMPLE
+        codCad.push(generoC3("heap[h]", 92, "", ""));
+        codCad.push(generoC3("h", "h", 1, "+"));
+        i++;
+      } else {
+        codCad.push(generoC3("heap[h]", ascii, "", ""));
+        codCad.push(generoC3("h", "h", 1, "+"));
+      }
+    } else {
+      codCad.push(generoC3("heap[h]", ascii, "", ""));
+      codCad.push(generoC3("h", "h", 1, "+"));
+    }
   }
   return codCad;
 }
@@ -572,9 +648,9 @@ function generoC3(et, opI, opD, op) {
 function castearBoo(tD, val) {
   if (tD == "CADENA") {
     if (val == "true") {
-      return "true";
+      return 1;
     } else if (val == "false") {
-      return "false";
+      return 0;
     } else {
       return val;
     }
@@ -618,8 +694,6 @@ function declaracion(elemento, mod) {
 }
 //METODO QUE DECLARA LAS VARIABLES
 function declaracionVariables(elemento, mod) {
-  //console.log(typeof mod);
-  //console.log(elemento);
   var cod3 = [];
   if (!buscarVariable(elemento.identificador)) {
     //CUANDO ES UNA CONSTANTE
@@ -628,12 +702,16 @@ function declaracionVariables(elemento, mod) {
         var exp = leerExpresion(elemento.valor[0]);
         if (exp.tipo != "Error Semantico") {
           //SI ES UNA EXPRESION VALIDA SE VERIFICAN LOS TIPOS
-          exp.tipoDato = cambiarTNumber(exp.tipoDato);
-          if (elemento.tipoDato.toLowerCase() == exp.tipoDato.toLowerCase()) {
+          //exp.tipoDato = cambiarTNumber(exp.tipoDato);
+          if (
+            elemento.tipoDato.toLowerCase() ==
+            cambiarTNumber(exp.tipoDato.toLowerCase())
+          ) {
             insertarAmbito({
               tipo: "VARIABLE",
               identificador: elemento.identificador,
               tipoDato: elemento.tipoDato,
+              tpDatoVal: exp.tipoDato,
               pos: posAmb++,
               fila: elemento.fila,
               columna: elemento.columna,
@@ -642,13 +720,28 @@ function declaracionVariables(elemento, mod) {
             a.CantidadE = a.DatosAmbito.length;
             var tmp1 = rTemporal();
             var t = rTActual();
-            cod3 = cod3.concat(exp.codigo3d);
-            cod3.push(generoC3(tmp1, "S", posAmb - 1, "+"));
-            cod3.push(generoC3("stack[" + t + "]", "", vT(exp), ""));
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////// CODIGO QUE VERIFICA SI ES PRIMITIVO O C3D Y ASIGNA VALOR CORRECTO /////////////////////////////
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //SE VERIFICA EL TIPO DE LA EXPRESION RETORNADA ANTES DE ASIGNARSE AL STACK YA QUE PUEDE SER UN VALOR PRIMITIVO O CADENA
+            var asigT; // guarda etiqueta o valor
+            if (exp.codigo3d != undefined) {
+              cod3 = cod3.concat(exp.codigo3d);
+            } else {
+              var vrT = verificarExpVU(exp); //VERIFICA LOS TIPOS SI ES PRIMITIVO O CODIGO DE 3 DIRECCIONES
+              if (vrT.tipo == "C3D") {
+                cod3 = cod3.concat(vrT.codigo3d);
+                asigT = vrT.etiqueta;
+              } else if (vrT.tipo == "PRIMITIVO") {
+                asigT = vrT.valor;
+              }
+            }
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            cod3.push(generoC3(tmp1, "s", posAmb - 1, "+"));
+            cod3.push(generoC3("stack[(int)" + t + "]", "", asigT, ""));
             imprimirC3(cod3);
           } else {
             //CUANDO LOS TIPOS NO COINCIDEN
-            //console.log("ASIGNACION INVALIDA");
             erroresCI.push({
               tipo: "Error Semantico",
               Error:
@@ -680,13 +773,18 @@ function declaracionVariables(elemento, mod) {
         var exp = leerExpresion(elemento.valor[0]);
         if (exp.tipo != "Error Semantico") {
           exp.tipoDato = cambiarTNumber(exp.tipoDato);
-          if (elemento.tipoDato.toLowerCase() == exp.tipoDato.toLowerCase()) {
+          var c = verificarExpVU(exp);
+          if (
+            elemento.tipoDato.toLowerCase() ==
+            cambiarTNumber(exp.tipoDato.toLowerCase())
+          ) {
             //SE GUARDA LA VARIABLE
             insertarAmbito({
               tipo: "VARIABLE",
               identificador: elemento.identificador,
               tipoDato: elemento.tipoDato,
-              pos: 0,
+              tpDatoVal: exp.tipoDato,
+              pos: posAmb++,
               fila: elemento.fila,
               columna: elemento.columna,
             });
@@ -695,9 +793,25 @@ function declaracionVariables(elemento, mod) {
             a.CantidadE = a.DatosAmbito.length;
             var tmp1 = rTemporal();
             var t = rTActual();
-            cod3 = cod3.concat(exp.codigo3d);
-            cod3.push(generoC3(tmp1, "S", posAmb - 1, "+"));
-            cod3.push(generoC3("stack[" + t + "]", "", vT(exp), ""));
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////// CODIGO QUE VERIFICA SI ES PRIMITIVO O C3D Y ASIGNA VALOR CORRECTO /////////////////////////////
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //SE VERIFICA EL TIPO DE LA EXPRESION RETORNADA ANTES DE ASIGNARSE AL STACK YA QUE PUEDE SER UN VALOR PRIMITIVO O CADENA
+            var asigT; // guarda etiqueta o valor
+            if (exp.codigo3d != undefined) {
+              cod3 = cod3.concat(exp.codigo3d);
+            } else {
+              var vrT = verificarExpVU(exp); //VERIFICA LOS TIPOS SI ES PRIMITIVO O CODIGO DE 3 DIRECCIONES
+              if (vrT.tipo == "C3D") {
+                cod3 = cod3.concat(vrT.codigo3d);
+                asigT = vrT.etiqueta;
+              } else if (vrT.tipo == "PRIMITIVO") {
+                asigT = vrT.valor;
+              }
+            }
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            cod3.push(generoC3(tmp1, "s", posAmbito(), "+"));
+            cod3.push(generoC3("stack[(int)" + t + "]", "", asigT, ""));
             imprimirC3(cod3);
           } else {
             //SI LOS TIPOS NO COINCIDEN
@@ -715,6 +829,25 @@ function declaracionVariables(elemento, mod) {
         }
       } else {
         //SI NO TIENE VALOR SE TIENE QUE INICIALIZAR LA VARIABLE
+        //SE GUARDA LA VARIABLE
+        insertarAmbito({
+          tipo: "VARIABLE",
+          identificador: elemento.identificador,
+          tipoDato: elemento.tipoDato,
+          tpDatoVal: elemento.tipoDato,
+          pos: posAmb++,
+          fila: elemento.fila,
+          columna: elemento.columna,
+        });
+        //SE ACTUALIZA LA CANTIDAD DE ELEMENTOS EN EL AMBITO
+        var a = rCantidad();
+        a.CantidadE = a.DatosAmbito.length;
+        var tmp1 = rTemporal();
+        var t = rTActual();
+        var val = inicializarVariable(elemento.tipoDato);
+        cod3.push(generoC3(tmp1, "s", posAmbito(), "+")); //posicion en el stack que se tiene que asignar
+        cod3.push(generoC3("stack[(int)" + t + "]", "", val, "")); //insercion en el stack
+        imprimirC3(cod3); //se imprime el codigo de 3 direcciones
       }
     }
   } else {
@@ -745,12 +878,12 @@ function buscarVariable(idV) {
 }
 //FUNCION QUE INICIALIZA VARIABLE
 function inicializarVariable(tipo) {
-  if (tipo == "NUMBER") {
+  if (tipo == "NUMERO" || tipo == "ENTERO" || tipo == "DECIMAL") {
     return 0;
   } else if (tipo == "BOOLEAN") {
-    return "false";
+    return 0;
   } else if (tipo == "CADENA") {
-    return "null";
+    return -1;
   }
 }
 //FUNCION QUE RETORNA TIPO NUMBER EN DADO CASO SEA TIPO DECIMAL O ENTERO LA EXPRESION
@@ -760,7 +893,6 @@ function cambiarTNumber(tp) {
   }
   return tp;
 }
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////FUNCION QUE IMPRIME CODIGO DE 3 DIRECCIONES EN TEXTAREA /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -790,15 +922,58 @@ function imprimirC3(v) {
         "," +
         element.expo +
         ");\n";
+    } else if (element.tipo == "PRINT") {
+      if (element.tipoDato == "DECIMAL") {
+        cad += 'printf("%f", ';
+        console.log("IMPRIMIR");
+        console.log(element.tipoDato);
+        cad += element.val;
+        cad += ");\n";
+      } else {
+        cad += 'printf("%i", ';
+        console.log("IMPRIMIR");
+        console.log(element.tipoDato);
+        cad += element.val;
+        cad += ");\n";
+      }
     }
   }
   TraduccionTP.setValue(cad);
 }
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////FUNCIONES PARA FUNCIONAMIENTO BASICO/////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////FUNCION QUE VERIFICA VALORES UNICOS Y GENERA SU CODIGO DE 3 DIRECCIONES
+function verificarExpVU(exp) {
+  //console.log(exp);
+  if (exp.tipo == "PRIMITIVO" || exp.tipo == "VALOR") {
+    if (exp.tipoDato == "CADENA" || exp.tipoDato == "BOOLEAN") {
+      var et = rTemporal();
+      var cod = c3dCadena(exp, et);
+      //console.log(cod);
+      return {
+        tipo: "C3D",
+        tipoDato: cambiarTNumber(exp.tipoDato),
+        etiqueta: et,
+        codigo3d: cod,
+      };
+    } else if (cambiarTNumber(exp.tipoDato) == "NUMERO") {
+      return {
+        tipo: "PRIMITIVO",
+        tipoDato: cambiarTNumber(exp.tipoDato),
+        valor: exp.valor,
+      };
+    }
+  } else {
+    return {
+      tipo: "C3D",
+      tipoDato: cambiarTNumber(exp.tipoDato),
+      etiqueta: exp.etiqueta,
+      codigo3d: exp.codigo3d,
+    };
+  }
+}
 ///////////////////////////////////////////////AGREGAR AMBITO
 function agregarAmbito(nombre) {
   posAmb = 0;
@@ -836,8 +1011,34 @@ function rTActual() {
 function rLabel() {
   return "L" + etiqueta++;
 }
+///////////////////////////////////////////////FUNCION QUE LIMPIA LOS TEMPORALES PARA LA EJECUCION
 function limpiar() {
   //codigo3D = [];
   temporal = 0;
   etiqueta = 0;
+}
+//////////////////////////////////////////////INDICE QUE SE MANEJA ENTRE AMBITOS
+function posAmbito() {
+  if (posAmb == 0) {
+    return 0;
+  } else {
+    return posAmb - 1;
+  }
+}
+///////////////////////////////////////////////
+//////////////////////////////////////////////FUNCION QUE BUSCA UN ID Y RETORNA ESE ELEMENTO PARA SER MODIFICADO
+function buscarVModificar(ele, idV) {
+  for (var i = ambitos.length - 1; i >= 0; i--) {
+    for (var element of ambitos[i]) {
+      if (element.identificador == idV) {
+        return element;
+      }
+    }
+  }
+  return {
+    tipo: "Error Semantico",
+    Error: "Necesita declarar variable para asignar valor " + ele.identificador,
+    Fila: ele.fila,
+    Columna: 0,
+  };
 }

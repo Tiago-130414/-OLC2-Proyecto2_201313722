@@ -370,9 +370,9 @@ LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR                                       
 ;
 /*--------------------------------------------- DEFINICION DE VARIABLES---------------------------------------------------------*/
 
-CONT_VAR: Identificador S_DosPuntos TIPOS_DE_DATO /*declaracion de variable con tipo de dato*/              { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato: $3 , valor : undefined , fila: this._$.first_line , columna: this._$.first_column};}                                                                          
+CONT_VAR: Identificador S_DosPuntos TIPOS_DE_DATO /*declaracion de variable con tipo de dato*/              { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato: undefined ,tipoDDV: $3, valor : undefined , fila: this._$.first_line , columna: this._$.first_column};}                                                                          
         //| Identificador /*declaracion de variable solo id*/                                     
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G/*declaracion de variable con tipo y asignacion de valor*/ {var exp;if(Array.isArray($5)){exp = $5;}else{exp = [$5];};$$ = {tipo : "VARIABLE", identificador : $1, tipoDato: $3 , valor : exp , fila: this._$.first_line , columna: this._$.first_column};}
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G/*declaracion de variable con tipo y asignacion de valor*/ {var exp;if(Array.isArray($5)){exp = $5;}else{exp = [$5];};$$ = {tipo : "VARIABLE", identificador : $1, tipoDato: undefined,tipoDDV: $3 , valor : exp , fila: this._$.first_line , columna: this._$.first_column};}
         //| Identificador S_Igual EXPRESION_G /*declaracion de variable con asignacion de valor*/                                     
 
 
@@ -463,7 +463,7 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
  ;
 
  CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                    
-               |  Identificador                                                             {$$ = {tipo : "VALOR" , tipoDato: "IDE" , valor : $1, fila: this._$.first_line, columna: this._$.first_column};}
+               |  Identificador                                                             {$$ = {tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
 /*---------------------------------------------EXPRESIONES---------------------------------------------------------*/
@@ -492,7 +492,7 @@ EXPRESION_G
 ;
 
  CONTENIDO_EXPRESION
-    : Entero                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "ENTERO" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                     
+    : Entero                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "ENTERO" , valor: $1 + ".0",fila: this._$.first_line , columna: this._$.first_column};}                     
     | Decimal                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "DECIMAL", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}    
     | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                      
     | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                                                          

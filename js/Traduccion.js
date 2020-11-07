@@ -159,10 +159,10 @@ case 107:
 $$[$0-2].push($$[$0]); this.$ = $$[$0-2];
 break;
 case 109:
- this.$ = {tipo : "VARIABLE" , identificador : $$[$0-2] , tipoDato: $$[$0] , valor : undefined , fila: this._$.first_line , columna: this._$.first_column};
+ this.$ = {tipo : "VARIABLE" , identificador : $$[$0-2] , tipoDato: undefined ,tipoDDV: $$[$0], valor : undefined , fila: this._$.first_line , columna: this._$.first_column};
 break;
 case 110:
-var exp;if(Array.isArray($$[$0])){exp = $$[$0];}else{exp = [$$[$0]];};this.$ = {tipo : "VARIABLE", identificador : $$[$0-4], tipoDato: $$[$0-2] , valor : exp , fila: this._$.first_line , columna: this._$.first_column};
+var exp;if(Array.isArray($$[$0])){exp = $$[$0];}else{exp = [$$[$0]];};this.$ = {tipo : "VARIABLE", identificador : $$[$0-4], tipoDato: undefined,tipoDDV: $$[$0-2] , valor : exp , fila: this._$.first_line , columna: this._$.first_column};
 break;
 case 111:
 this.$ = {tipo : "ARRAY" , identificador : $$[$0-4] , tipoDato: undefined , valor : $$[$0-1] , fila: this._$.first_line , columna: this._$.first_column};
@@ -204,7 +204,7 @@ case 145:
 this.$ = "VOID";
 break;
 case 152:
-this.$ = {tipo : "VALOR" , tipoDato: "IDE" , valor : $$[$0], fila: this._$.first_line, columna: this._$.first_column};
+this.$ = {tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $$[$0], fila: this._$.first_line, columna: this._$.first_column};
 break;
 case 153:
 this.$ = expresionB($$[$0-2],'&&',$$[$0]);
@@ -267,7 +267,7 @@ case 172:
 this.$ = expresionB(UND("BOOLEAN"),'!' ,$$[$0]);
 break;
 case 174:
-this.$ = {tipo:"PRIMITIVO" , tipoDato : "ENTERO" , valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};
+this.$ = {tipo:"PRIMITIVO" , tipoDato : "ENTERO" , valor: $$[$0] + ".0",fila: this._$.first_line , columna: this._$.first_column};
 break;
 case 175:
 this.$ = {tipo:"PRIMITIVO" , tipoDato : "DECIMAL", valor: $$[$0],fila: this._$.first_line , columna: this._$.first_column};

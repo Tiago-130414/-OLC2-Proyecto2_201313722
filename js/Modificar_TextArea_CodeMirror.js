@@ -16,8 +16,7 @@ var TraduccionTP = CodeMirror.fromTextArea(
     lineNumbers: true,
     smartIndent: true,
     matchBrackets: true,
-    continueComments: "Enter",
-    mode: "javascript",
+    mode: "clike",
     hint: true,
   }
 );
@@ -28,7 +27,6 @@ var Codigo = CodeMirror.fromTextArea(document.getElementById("codigoTXT"), {
   mode: "javascript",
   lineNumbers: true,
   matchBrackets: true,
-  continueComments: "Enter",
   hint: true,
 });
 Codigo.setSize("500", "500");

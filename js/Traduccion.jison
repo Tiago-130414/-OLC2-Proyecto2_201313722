@@ -292,12 +292,12 @@ CONT_FOR_OF : R_Const Identificador R_Of Identificador
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
 
-ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES S_PuntoComa                        {$$ = {tipo : "ASIGNACION" , identificador : $1 , ope : '=' ,valor : $3};}
+ASIGNACION : ATRIBUTOS S_Igual LISTA_DE_ASIGNACIONES COMPLETAR_ASIGNACION S_PuntoComa   {var vector = [{tipo : "ASIGNACION" , identificador : $1 , ope : '=' ,valor : $3}]; vector = vector.concat($4) ;$$ = {tipo : "LISTA_ASIGNACION", contenido : vector };}
            //incrementos 
-           | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $1 , ope : '++D' , valor: undefined}].concat($3)};}
-           | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $2 , ope : 'A++' , valor: undefined}].concat($3)};}
-           | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $1 , ope : '--D' , valor: undefined}].concat($3)};}
-           | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $2 , ope : 'A--' , valor: undefined}].concat($3)};}
+           | ATRIBUTOS OP_Incremento COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $1 , ope : '++D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column}].concat($3)};}
+           | OP_Incremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $2 , ope : 'A++' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column}].concat($3)};}
+           | ATRIBUTOS OP_Decremento COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $1 , ope : '--D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column}].concat($3)};}
+           | OP_Decremento ATRIBUTOS COMPLETAR_ASIGNACION S_PuntoComa                   {$$ = {tipo : "LISTA_ASIGNACION", contenido : [{tipo : "ASIGNACION" , identificador : $2 , ope : 'A--' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column}].concat($3)};}
 ;
 
 COMPLETAR_ASIGNACION : LISTADO_ASIGNACION
@@ -308,11 +308,11 @@ LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION                    
                   | CONTENIDO_ASIGNACION                                                {$$ = [$1];}
 ;
 
-CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                          {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];};$$ = exp;$$ = {tipo : "ASIGNACION" , identificador : $2, ope : '=', valor: exp};}
-                    | S_Coma Identificador OP_Incremento                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDE" , valor : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '++D' , valor: undefined};}
-                    | S_Coma OP_Incremento Identificador                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDE" , valor : $3, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A++' , valor: undefined};}
-                    | S_Coma Identificador OP_Decremento                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDE" , valor : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '--D' , valor: undefined};}
-                    | S_Coma OP_Decremento Identificador                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDE" , valor : $3, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A--' , valor: undefined};}
+CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                          {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];};$$ = exp;$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}
+                    | S_Coma Identificador OP_Incremento                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '++D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
+                    | S_Coma OP_Incremento Identificador                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $3, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A++' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
+                    | S_Coma Identificador OP_Decremento                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '--D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
+                    | S_Coma OP_Decremento Identificador                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $3, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A--' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
 LISTA_DE_ASIGNACIONES : EXPRESION_G                                                     {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];};$$ = exp;}

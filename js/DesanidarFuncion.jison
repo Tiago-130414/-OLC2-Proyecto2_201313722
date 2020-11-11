@@ -419,10 +419,10 @@ function eFor(f){
             for(var ele of element.contenido){
                 if(ele.tipo == "expresion"){
                     for(var e of ele.contenido){
-                        cad += e.contenido; 
+                        cad += e.contenido + " "; 
                     }
                 }else{
-                    cad+=ele.contenido;
+                    cad+=ele.contenido + " ";
                 }
             }
         }else if(element.tipo == "condicionFor"){
@@ -631,7 +631,7 @@ CONTENIDO : FUNCIONES                   {
                                         }
                                         $$ = temp;
                                         }
-          |  error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
+        |  error  {$$ ='';tablaErrores.push({ tipo  : ' Error_Sintactico ', Error  : yytext , Fila  : this._$.first_line , Columna  :  this._$.first_column });}
 ;
 /*---------------------------------------------DEFINICION DE FUNCIONES---------------------------------------------------------*/
 FUNCIONES : R_Funcion Identificador S_ParentesisAbre PARAM S_ParentesisCierra S_LlaveAbre CONT S_LlaveCierra {var json  = { tipo: "funcion" , contenido : [{tipo : "identificador", contenido : $2},{tipo : "parametros", contenido : $4},{tipo : "instrucciones", contenido : $7}]};$$ =recorrerJson(json);}//contenido : [$7]
@@ -731,11 +731,11 @@ FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_Parentes
 
 CONT_FOR
     : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa                                     {var exp = returnVector($6); var json = [{tipo : "variable_let" , contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : $3},{tipo : "tipoDato" , contenido : $4},{tipo : "concatenar" , contenido : " " + $5+ " "},{tipo : "expresion" , contenido : exp},{tipo : "concatenar" , contenido : $7 +" "}];$$=json;}
-    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                               {var exp = returnVector($4);var json = [{tipo : "variable_let", contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : " "+$3+" "},{tipo : "expresion" , contenido : exp},{tipo : "concatenar" , contenido : $5}]; $$ = json;}
     | Identificador S_PuntoComa                                                                                         { var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : $2}];$$ = json;}
     | Identificador S_Igual EXPRESION_G S_PuntoComa                                                                     {var exp = returnVector($3);var json = [{tipo : "identificador", contenido : $1},{tipo : "concatenar" , contenido : " " + $2 + " "},{tipo : "expresion" , contenido : exp},{tipo : "concatenar" , contenido : $4}];$$ = json;}
 ;
-
+//| R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                               {var exp = returnVector($4);var json = [{tipo : "variable_let", contenido : $1},{tipo : "identificador" , contenido : $2},{tipo : "concatenar" , contenido : " "+$3+" "},{tipo : "expresion" , contenido : exp},{tipo : "concatenar" , contenido : $5}]; $$ = json;}
+    
 FIN_FOR
     : Identificador S_Igual EXPRESION_G                                                { var exp = returnVector($3);var  json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "expresion" , contenido : exp}]; $$ = json;}
     | Identificador OP_Incremento                                                      { var  json = [{tipo : "identificador" , contenido : $1},{tipo : "concatenar" , contenido : $2}]; $$ = json;}

@@ -181,7 +181,7 @@ CONT_ESTRUCTURAS_CONTROL : ESTRUCTURAS_DE_CONTROL
 
 ESTRUCTURAS_DE_CONTROL: VARIABLES                       
                       | ASIGNACION                      
-                      | LISTADO_IF ELSE                 
+                      | LISTADO_IF ELSE                                 {var vec = $1; vec = vec.concat($2);$$ = {tipo : "LISTADO_IF" , contenido : vec};} 
                       | SWITCH                          
                       | IMPRIMIR                        
                       | WHILE                           
@@ -207,36 +207,36 @@ SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa
 ;
 
 /*--------------------------------------------- LISTADO IF---------------------------------------------------------*/
-LISTADO_IF : LISTADO_IF R_Else IF                                                               
-           | IF                                                                                 
+LISTADO_IF : LISTADO_IF R_Else IF                                                               {var elsif = $3;elsif.tipo = "ELSEIF";$1.push(elsif);$$ = $1;}
+           | IF                                                                                 {var json =[]; json.push($1); $$ = json;}      
 ;
 
-IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};$$ = {tipo : "IF" , expresion : exp , instrucciones : $6 , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
-ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                                     
-     |
+ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                                     {$$ = { tipo : "ELSE" , instrucciones : $3 , fila: this._$.first_line, columna: this._$.first_column};}
+     |                                                                                          {$$ = [];}
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
-SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra                
+SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra                 {var vec = [];vec = vec.concat($6);vec = vec.concat($7) ; var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];}; $$ = {tipo : "SWITCH" , expresion : exp , instrucciones : vec , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 /*---------------------------------------------LISTADO DE CASE---------------------------------------------------------*/
 
 CASE : LISTA_CASE                                                   
-     |                                                                              
+     |                                                                                            {$$ = [];}
 ;
 
-LISTA_CASE: LISTA_CASE DEFINIR_CASE                                                 
-          | DEFINIR_CASE                                                            
+LISTA_CASE: LISTA_CASE DEFINIR_CASE                                                               {$1.push($2);$$=$1;}
+          | DEFINIR_CASE                                                                          {var vec = []; vec.push($1);$$ = vec}  
 ;
 
-DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                     
+DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                                   {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];};$$ = { tipo : "CASE" , expresion :exp , instrucciones : $4 , fila: this._$.first_line, columna: this._$.first_column};}   
 ;
 /*---------------------------------------------DEFINICION DE DEFAULT---------------------------------------------------------*/
 
-DEFINIR_DEFAULT: R_Default S_DosPuntos EDD                                          
-               |                                                                    
+DEFINIR_DEFAULT: R_Default S_DosPuntos EDD                                                         {$$ = [{tipo : "DEFAULT" , instrucciones : $3 , fila: this._$.first_line, columna: this._$.first_column}];}                 
+               |                                                                                   {$$ = [];} 
 ;
 /*---------------------------------------------IMPRIMIR---------------------------------------------------------*/
 IMPRIMIR: R_Console S_Punto R_Log S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa                  {$$ = {tipo : "IMPRIMIR" , instruccion: "CONSOLE", contenido: $5};}
@@ -246,30 +246,28 @@ FUNC: EXPRESION_G                       {var arr;if(Array.isArray($1)){arr = $1;
     |                                   {$$ = [];}
 ;
 /*---------------------------------------------WHILE---------------------------------------------------------*/
-WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra
+WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                        {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];}; $$ = {tipo : "WHILE" , expresion : exp, instrucciones : $6 , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 /*---------------------------------------------DO-WHILE---------------------------------------------------------*/
-DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa
+DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa    {var exp;if(Array.isArray($7)){exp = $7;}else{exp = [$7];};$$ = {tipo : "DOWHILE" , instrucciones : $3 , expresion : exp , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
 /*---------------------------------------------FOR---------------------------------------------------------*/
-FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra  
+FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra  {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];};$$ = {tipo : "FOR" , inicio : $3 , expresion : exp , fin: $6 , instrucciones : $9 , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
-CONT_FOR
-    : R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa                                     
-    | R_Let Identificador S_Igual EXPRESION_G S_PuntoComa                                                               
-    | Identificador S_PuntoComa                                                                                         
-    | Identificador S_Igual EXPRESION_G S_PuntoComa                                                                     
+CONT_FOR: R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa          {var exp;if(Array.isArray($6)){exp = $6;}else{exp = [$6];};var cont = [{tipo : "VARIABLE", identificador : $2, tipoDato: undefined,tipoDDV: $4 , valor : exp , fila: this._$.first_line , columna: this._$.first_column}];$$ = {tipo: "DECLARACION",modificador : $1 , contenido : cont};}                                                                                 
+    | Identificador S_PuntoComa                                                                  {$$ = {tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column};}                              
+    | Identificador S_Igual EXPRESION_G S_PuntoComa                                              {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};$$ = exp;$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}                             
 ;
 
 FIN_FOR
-    : Identificador S_Igual EXPRESION_G                                                
-    | Identificador OP_Incremento                                                      
-    | OP_Incremento Identificador                                                       
-    | Identificador OP_Decremento                                                      
-    | OP_Decremento Identificador                                                                              
-    ;
+    : Identificador S_Igual EXPRESION_G                                                          {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};$$ = exp;$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}                                  
+    | Identificador OP_Incremento                                                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '++D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
+    | OP_Incremento Identificador                                                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A++' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
+    | Identificador OP_Decremento                                                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '--D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}   
+    | OP_Decremento Identificador                                                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A--' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}                                             
+;
 /*---------------------------------------------FOR IN---------------------------------------------------------*/
 
 FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         

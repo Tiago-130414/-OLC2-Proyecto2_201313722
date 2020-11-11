@@ -19,7 +19,7 @@ function generarIntermedio(traduccion) {
   }
   //generara el codigo intermedio
   agregarAmbito("GLOBAL");
-  generate(json.jsonInt);
+  generate(json.jsonInt, []);
   eliminarA();
   limpiar();
   //console.log(ambitos);
@@ -32,9 +32,7 @@ function generarIntermedio(traduccion) {
 ////////////////////////////////////////FUNCION SEPARADORA DE INSTRUCCIONES /////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //ESTE METODO ES PARA RECORRER EL JSON GENERADO DESDE TRADUCCION.JISON
-function generate(json) {
-  var c3d = [];
-  var band = false;
+function generate(json, vec) {
   for (var element of json) {
     if (element.tipo == "DECLARACION") {
       declaracion(element.contenido, element.modificador);
@@ -43,15 +41,41 @@ function generate(json) {
     } else if (element.tipo == "IMPRIMIR") {
       generarImprimir(element.contenido);
     } else if (element.tipo == "LISTADO_IF") {
-      generarCodigoIF(element.contenido);
+      generarCodigoIF(element.contenido, vec);
     } else if (element.tipo == "SWITCH") {
-      generarCodigoSwitch(element);
+      generarCodigoSwitch(element, vec);
     } else if (element.tipo == "WHILE") {
-      generarCodigoWhile(element);
+      generarCodigoWhile(element, vec);
     } else if (element.tipo == "DOWHILE") {
-      generarCodigoDoWhile(element);
+      generarCodigoDoWhile(element, vec);
     } else if (element.tipo == "FOR") {
-      generarCodigoFor(element);
+      generarCodigoFor(element, vec);
+    } else if (element.tipo == "BREAK") {
+      var cod = generarCodigoST(
+        vec,
+        element.tipo,
+        element.fila,
+        element.columna
+      );
+      if (cod.tipo != "Error Semantico") {
+        imprimirC3(cod);
+      } else {
+        erroresCI.push(cod);
+      }
+      return;
+    } else if (element.tipo == "CONTINUE") {
+      var cod = generarCodigoST(
+        vec,
+        element.tipo,
+        element.fila,
+        element.columna
+      );
+      if (cod.tipo != "Error Semantico") {
+        imprimirC3(cod);
+      } else {
+        erroresCI.push(cod);
+      }
+      return;
     }
   }
 }
@@ -1901,7 +1925,7 @@ function asignacionVariables(ele) {
 ////////////////////////////////////////FUNCION PARA C3D DE IF /////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function generarCodigoIF(vec) {
+function generarCodigoIF(vec, v) {
   var c3d = [];
   var etV;
   var etF;
@@ -1920,7 +1944,7 @@ function generarCodigoIF(vec) {
           c3d.push(agregarAmbito(ele.tipo));
           imprimirC3(c3d);
           c3d = [];
-          generate(ele.instrucciones);
+          generate(ele.instrucciones, v);
           c3d.push(eliminarA());
           imprimirC3(c3d);
           c3d = [];
@@ -1944,7 +1968,7 @@ function generarCodigoIF(vec) {
       c3d.push(agregarAmbito(ele.tipo));
       imprimirC3(c3d);
       c3d = [];
-      generate(ele.instrucciones);
+      generate(ele.instrucciones, v);
       c3d.push(eliminarA());
       imprimirC3(c3d);
       c3d = [];
@@ -1956,15 +1980,14 @@ function generarCodigoIF(vec) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////FUNCION PARA C3D DE SWITCH /////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function generarCodigoSwitch(vec) {
-  //console.log(vec.expresion);
-  //console.log(x);
-  //console.log(vec.instrucciones);
+function generarCodigoSwitch(vec, v) {
   var exp = leerExpresion(vec.expresion[0]);
   var c3d = [];
   var etiq;
   var etiqSalida;
   var opD;
+  var vc = [];
+  var ambR;
   var vLabel = [];
   if (exp.tipo != "Error Semantico") {
     etiq = evaluarExpSwitch(exp);
@@ -1992,22 +2015,27 @@ function generarCodigoSwitch(vec) {
       imprimirC3(c3d);
       c3d = [];
       var temp = vec.instrucciones;
+      ambR = rAmbActual();
       for (var ele in vec.instrucciones) {
         if (temp[ele].tipo == "CASE") {
           c3d.push(generarEtiquetaJSON(vLabel[ele]));
+
+          vc = v.concat(generarST("BREAK", etiqSalida, ambR));
           c3d.push(agregarAmbito("CASE"));
           imprimirC3(c3d);
           c3d = [];
-          generate(temp[ele].instrucciones);
+          generate(temp[ele].instrucciones, vc);
           c3d.push(eliminarA());
           imprimirC3(c3d);
           c3d = [];
         } else if (temp[ele].tipo == "DEFAULT") {
           c3d.push(generarEtiquetaJSON(vLabel[ele]));
+          ambR = rAmbActual();
+          vc = v.concat(generarST("BREAK", etiqSalida, ambR));
           c3d.push(agregarAmbito("DEFAULT"));
           imprimirC3(c3d);
           c3d = [];
-          generate(temp[ele].instrucciones);
+          generate(temp[ele].instrucciones, vc);
           c3d.push(eliminarA());
           imprimirC3(c3d);
           c3d = [];
@@ -2063,25 +2091,31 @@ function evaluarExpSwitch(exp) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////FUNCION PARA C3D DE WHILE /////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function generarCodigoWhile(exp) {
+function generarCodigoWhile(exp, v) {
   var c3d = [];
   var lblV;
   var lblF;
   var lblW;
-
+  var vc = [];
+  var ambR;
   var ex = leerExpresion(exp.expresion[0]);
   if (ex.tipo != "Error Semantico") {
     if (ex.tipoDato == "BOOLEAN") {
       lblV = ex.etiqueta[0].lbV;
       lblF = ex.etiqueta[0].lbF;
       lblW = rLabel();
+      //lblCont = rLabel();
+      ambR = rAmbActual();
+      vc = v.concat(generarST("CONTINUE", lblW, ambR));
+      vc = vc.concat(generarST("BREAK", lblF, ambR));
+
       c3d.push(generarEtiquetaJSON(lblW));
       c3d = c3d.concat(ex.codigo3d);
       c3d.push(generarEtiquetaJSON(lblV));
       c3d.push(agregarAmbito("WHILE"));
       imprimirC3(c3d);
       c3d = [];
-      generate(exp.instrucciones);
+      generate(exp.instrucciones, vc);
       c3d.push(eliminarA());
       c3d.push(generarGoto(lblW));
       c3d.push(generarEtiquetaJSON(lblF));
@@ -2104,29 +2138,35 @@ function generarCodigoWhile(exp) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////FUNCION PARA C3D DE DO-WHILE ///////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function generarCodigoDoWhile(exp) {
+function generarCodigoDoWhile(exp, v) {
   var c3d = [];
   var lblV;
   var lblF;
   var lblDW;
+  var vc = [];
+  var lblCont;
   var ex = leerExpresion(exp.expresion[0]);
   if (ex.tipo != "Error Semantico") {
     if (ex.tipoDato == "BOOLEAN") {
       lblV = ex.etiqueta[0].lbV;
       lblF = ex.etiqueta[0].lbF;
       lblDW = rLabel();
+      lblCont = rLabel();
       //etiqueta de verdadero
       c3d.push(generarEtiquetaJSON(lblV));
+      vc = v.concat(generarST("CONTINUE", lblCont, rAmbActual()));
+      vc = vc.concat(generarST("BREAK", lblF, rAmbActual()));
       c3d.push(agregarAmbito("DO-WHILE"));
       imprimirC3(c3d);
       c3d = [];
       // instrucciones que tra el dowhile
-      generate(exp.instrucciones);
+      generate(exp.instrucciones, vc);
       c3d.push(eliminarA());
       c3d.push(generarEtiquetaJSON(lblDW));
       imprimirC3(c3d);
       c3d = [];
       //INSTRUCCIONES DE  LA CONDICION
+      c3d.push(generarEtiquetaJSON(lblCont));
       c3d = c3d.concat(ex.codigo3d);
       imprimirC3(c3d);
       c3d = [];
@@ -2151,7 +2191,7 @@ function generarCodigoDoWhile(exp) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////FUNCION PARA C3D DE FOR ////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function generarCodigoFor(exp) {
+function generarCodigoFor(exp, v) {
   var c3d = [];
   var inicioFor = exp.inicio;
   var condicion;
@@ -2159,11 +2199,14 @@ function generarCodigoFor(exp) {
   var lblV;
   var lblF;
   var lblFor;
-
+  var lblCont;
+  var vc = [];
+  var ambA;
   c3d.push(agregarAmbito("FOR"));
   imprimirC3(c3d);
   c3d = [];
   //DECLARACION DEL FOR
+  ambA = rAmbActual();
   if (inicioFor.tipo == "DECLARACION") {
     declaracion(inicioFor.contenido, inicioFor.modificador);
   } else if (inicioFor.tipo == "ASIGNACION") {
@@ -2171,30 +2214,36 @@ function generarCodigoFor(exp) {
   } else if (inicioFor.tipo == "VALOR") {
     if (inicioFor.tipoDato == "IDENTIFICADOR") {
       var valId = buscarVModificar(inicioFor, inicioFor.identificador);
+      if (valId.tipo == "Error Semantico") {
+        erroresCI.push(valId);
+        return;
+      }
     }
   }
   condicion = leerExpresion(exp.expresion[0]);
   if (condicion.tipo != "Error Semantico") {
     if (condicion.tipoDato == "BOOLEAN") {
       lblFor = rLabel();
+      lblCont = rLabel();
       c3d.push(generarEtiquetaJSON(lblFor));
       c3d = c3d.concat(condicion.codigo3d);
       lblV = condicion.etiqueta[0].lbV;
       lblF = condicion.etiqueta[0].lbF;
+      vc = v.concat(generarST("CONTINUE", lblCont, ambA));
+      vc = vc.concat(generarST("BREAK", lblF, ambA));
       c3d.push(generarEtiquetaJSON(lblV));
-      //FIXME: ETIQUETA VERDADERA
-      c3d.push(agregarAmbito("FOR"));
+      c3d.push(agregarAmbito("INSTRUCCIONES FOR"));
       imprimirC3(c3d);
       c3d = [];
-      generate(exp.instrucciones);
+      generate(exp.instrucciones, vc);
       c3d.push(eliminarA());
+      c3d.push(generarEtiquetaJSON(lblCont));
       imprimirC3(c3d);
       c3d = [];
       if (finFor.tipo == "ASIGNACION") {
         asignacionVariables(finFor);
       }
       c3d.push(generarGoto(lblFor));
-
       c3d.push(generarEtiquetaJSON(lblF));
       imprimirC3(c3d);
       c3d = [];
@@ -2209,13 +2258,12 @@ function generarCodigoFor(exp) {
     }
   } else {
     erroresCI.push(condicion);
+    return;
   }
   c3d.push(eliminarA());
   imprimirC3(c3d);
   c3d = [];
 }
-//FIXME: AQUI ME QUEDE TRABAJANDO LA ESTRUCTURA DEL FOR FALTA VERIFICAR BIEN LOS ERRORES
-function estructuraFor() {}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////FUNCION QUE IMPRIME CODIGO DE 3 DIRECCIONES EN TEXTAREA /////////////////////////////////
@@ -2283,8 +2331,26 @@ function imprimirC3(v) {
   TraduccionTP.setValue(cad);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////FUNCION QUE GENERA SENTENCIAS DE TRANSFERENCIA/////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function generarCodigoST(vc, tpST, fil, col) {
+  var c3d = [];
+  for (var element = vc.length - 1; element >= 0; element--) {
+    if (vc[element].tipo == tpST) {
+      c3d.push(generoC3("s", "", vc[element].ambitoR, ""));
+      c3d.push(generarGoto(vc[element].label));
+      return c3d;
+    }
+  }
+  return gError(tpST + " en instruccion no valida", fil, col);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////FUNCIONES PARA FUNCIONAMIENTO BASICO/////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
+function generarST(tp, lblR, ambR) {
+  return { tipo: tp, label: lblR, ambitoR: ambR };
+}
 
 function generarIf(opI, op, opD, lbl) {
   return { tipo: "IF", opIz: opI, operacion: op, opDer: opD, label: lbl };
@@ -2370,6 +2436,10 @@ function rInicioAmb() {
   } else {
     return 0;
   }
+}
+
+function rAmbActual() {
+  return ambitos[ambitos.length - 1].Inicio;
 }
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////FUNCION QUE RETORNA LA CANTIDAD DE ELEMENTOS DEL ULTIMO VECTOR

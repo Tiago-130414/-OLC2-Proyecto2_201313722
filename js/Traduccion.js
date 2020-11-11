@@ -107,6 +107,12 @@ break;
 case 19:
 var vec = $$[$0-1]; vec = vec.concat($$[$0]);this.$ = {tipo : "LISTADO_IF" , contenido : vec};
 break;
+case 33:
+this.$ = {tipo : "BREAK" , fila: this._$.first_line, columna: this._$.first_column};
+break;
+case 34:
+this.$ = {tipo : "CONTINUE" , fila: this._$.first_line, columna: this._$.first_column};
+break;
 case 37:
 var elsif = $$[$0];elsif.tipo = "ELSEIF";$$[$0-2].push(elsif);this.$ = $$[$0-2];
 break;

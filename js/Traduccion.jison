@@ -200,8 +200,8 @@ M_STRING : ATRIBUTOS MET_STRING S_PuntoComa
 ;
 /*--------------------------------------------- SENTENCIAS DE TRANSFERENCIA ---------------------------------------------------------*/
 
-SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                                  
-                         | R_Continue S_PuntoComa                                               
+SENTENCIAS_TRANSFERENCIA : R_Break S_PuntoComa                                                  {$$ = {tipo : "BREAK" , fila: this._$.first_line, columna: this._$.first_column};}                        
+                         | R_Continue S_PuntoComa                                               {$$ = {tipo : "CONTINUE" , fila: this._$.first_line, columna: this._$.first_column};}
                          | R_Return S_PuntoComa                                                 
                          | R_Return EXPRESION_G S_PuntoComa                                     
 ;

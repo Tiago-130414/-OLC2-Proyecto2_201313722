@@ -36,7 +36,8 @@
 "Concat"                                            {  return 'R_Concat'; }
 "length"                                            {  return 'R_Length';}
 "function"                                          {  return 'R_Funcion';}
-"graficar_ts"                                       { return 'R_Graficar';}
+"graficar_ts"                                       {  return 'R_Graficar';}
+"null"                                              {  return 'R_Null';}
 
 /*ESTRUCTURAS DE CONTROL*/
 "if"                                                {return 'R_If';}
@@ -504,6 +505,7 @@ EXPRESION_G
     | Decimal                                                                                   {$$ = {Nombre: $1 , vector : []};}
     | R_True                                                                                    {$$ = {Nombre: $1 , vector : []};}
     | R_False                                                                                   {$$ = {Nombre: $1 , vector : []};}
+    | R_Null                                                                                    {$$ = {Nombre: $1 , vector : []};}
     | Cadena                                                                                    {$$ = {Nombre: $1 , vector : []};}
     | Cadena MET_STRING     /*Metodos string*/                                                  {$$ = {Nombre: "METODO_STRING" ,vector : [{Nombre : $1, vector : []},$2]};}
     | ATRIBUTOS MET_STRING    /*Metodos string*/                                                {$$ = {Nombre: "METODO_STRING" ,vector : [$1,$2]};}

@@ -211,7 +211,7 @@ LISTADO_IF : LISTADO_IF R_Else IF                                               
            | IF                                                                                 {var json =[]; json.push($1); $$ = json;}      
 ;
 
-IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};$$ = {tipo : "IF" , expresion : exp , instrucciones : $6 , fila: this._$.first_line, columna: this._$.first_column};}
+IF : R_If S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];}$$ = {tipo : "IF" , expresion : exp , instrucciones : $6 , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
 ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                                     {$$ = { tipo : "ELSE" , instrucciones : $3 , fila: this._$.first_line, columna: this._$.first_column};}
@@ -219,7 +219,7 @@ ELSE : R_Else S_LlaveAbre EDD S_LlaveCierra                                     
 ;
 
 /*---------------------------------------------SWITCH---------------------------------------------------------*/
-SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra                 {var vec = [];vec = vec.concat($6);vec = vec.concat($7) ; var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];}; $$ = {tipo : "SWITCH" , expresion : exp , instrucciones : vec , fila: this._$.first_line, columna: this._$.first_column};}
+SWITCH : R_Switch S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre CASE DEFINIR_DEFAULT S_LlaveCierra                 {var vec = [];vec = vec.concat($6);vec = vec.concat($7) ; var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];} $$ = {tipo : "SWITCH" , expresion : exp , instrucciones : vec , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 /*---------------------------------------------LISTADO DE CASE---------------------------------------------------------*/
 
@@ -231,7 +231,7 @@ LISTA_CASE: LISTA_CASE DEFINIR_CASE                                             
           | DEFINIR_CASE                                                                          {var vec = []; vec.push($1);$$ = vec}  
 ;
 
-DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                                   {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];};$$ = { tipo : "CASE" , expresion :exp , instrucciones : $4 , fila: this._$.first_line, columna: this._$.first_column};}   
+DEFINIR_CASE:R_Case EXPRESION_G S_DosPuntos EDD                                                   {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];}$$ = { tipo : "CASE" , expresion :exp , instrucciones : $4 , fila: this._$.first_line, columna: this._$.first_column};}   
 ;
 /*---------------------------------------------DEFINICION DE DEFAULT---------------------------------------------------------*/
 
@@ -246,23 +246,55 @@ FUNC: EXPRESION_G                       {var arr;if(Array.isArray($1)){arr = $1;
     |                                   {$$ = [];}
 ;
 /*---------------------------------------------WHILE---------------------------------------------------------*/
-WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                        {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];}; $$ = {tipo : "WHILE" , expresion : exp, instrucciones : $6 , fila: this._$.first_line, columna: this._$.first_column};}
+WHILE: R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra                        {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];} $$ = {tipo : "WHILE" , expresion : exp, instrucciones : $6 , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 /*---------------------------------------------DO-WHILE---------------------------------------------------------*/
-DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa    {var exp;if(Array.isArray($7)){exp = $7;}else{exp = [$7];};$$ = {tipo : "DOWHILE" , instrucciones : $3 , expresion : exp , fila: this._$.first_line, columna: this._$.first_column};}
+DO_WHILE: R_Do S_LlaveAbre EDD S_LlaveCierra R_While S_ParentesisAbre EXPRESION_G S_ParentesisCierra S_PuntoComa    {var exp;if(Array.isArray($7)){exp = $7;}else{exp = [$7];}$$ = {tipo : "DOWHILE" , instrucciones : $3 , expresion : exp , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
 /*---------------------------------------------FOR---------------------------------------------------------*/
-FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra  {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];};$$ = {tipo : "FOR" , inicio : $3 , expresion : exp , fin: $6 , instrucciones : $9 , fila: this._$.first_line, columna: this._$.first_column};}
+FOR : R_For S_ParentesisAbre CONT_FOR EXPRESION_G S_PuntoComa FIN_FOR S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra  {
+    var exp;
+    if(Array.isArray($4)){
+        exp = $4;
+    }else{
+        exp = [$4];
+    }
+    $$ = {tipo : "FOR" , inicio : $3 , expresion : exp , fin: $6 , instrucciones : $9 , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
-CONT_FOR: R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa          {var exp;if(Array.isArray($6)){exp = $6;}else{exp = [$6];};var cont = [{tipo : "VARIABLE", identificador : $2, tipoDato: undefined,tipoDDV: $4 , valor : exp , fila: this._$.first_line , columna: this._$.first_column}];$$ = {tipo: "DECLARACION",modificador : $1 , contenido : cont};}                                                                                 
+CONT_FOR: R_Let Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G S_PuntoComa          {
+    var exp;
+    if(Array.isArray($6)){
+        exp = $6;
+    }else{
+        exp = [$6];
+    }
+    var cont = [{tipo : "VARIABLE", identificador : $2, tipoDato: undefined,tipoDDV: $4 , valor : exp , fila: this._$.first_line , columna: this._$.first_column}];
+    $$ = {tipo: "DECLARACION",modificador : $1 , contenido : cont};
+    }                                                                                 
     | Identificador S_PuntoComa                                                                  {$$ = {tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column};}                              
-    | Identificador S_Igual EXPRESION_G S_PuntoComa                                              {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};$$ = exp;$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}                             
+    | Identificador S_Igual EXPRESION_G S_PuntoComa                                              
+    {
+        var exp;
+        if(Array.isArray($3)){
+            exp = $3;
+        }else{
+            exp = [$3];
+        }
+        $$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}                             
 ;
 
 FIN_FOR
-    : Identificador S_Igual EXPRESION_G                                                          {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};$$ = exp;$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}                                  
+    : Identificador S_Igual EXPRESION_G                                                          {
+        var exp;
+        if(Array.isArray($3)){
+            exp = $3;
+        }else{
+            exp = [$3];
+        }
+        $$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};
+        }                                  
     | Identificador OP_Incremento                                                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '++D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
     | OP_Incremento Identificador                                                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A++' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
     | Identificador OP_Decremento                                                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '--D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}   
@@ -270,22 +302,22 @@ FIN_FOR
 ;
 /*---------------------------------------------FOR IN---------------------------------------------------------*/
 
-FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         
+FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra      {$$ = {tipo : "FORIN" , contenido : $3, instrucciones : $6};}
 ;
 
-CONT_FOR_IN : R_Const Identificador R_In Identificador                                              
-            | R_Let Identificador R_In Identificador                                                
-            | Identificador R_In Identificador                                                      
+CONT_FOR_IN : R_Const Identificador R_In Identificador                                           {$$ = {tipo : "CONTFIN" ,modificador : $1, identificador : $2 , vector :$4};}               
+            | R_Let Identificador R_In Identificador                                             {$$ = {tipo : "CONTFIN" ,modificador : $1, identificador : $2 , vector :$4};}   
+            | Identificador R_In Identificador                                                   {$$ = {tipo : "CONTFIN" ,modificador : undefined, identificador : $2 , vector :$4};}  
 ;
 
 
 /*---------------------------------------------FOR OF---------------------------------------------------------*/
-FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra         
+FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra       {$$ = {tipo : "FOROF" , contenido : $3, instrucciones : $6};}  
 ;
 
-CONT_FOR_OF : R_Const Identificador R_Of Identificador                                              
-            | R_Let Identificador R_Of Identificador                                                
-            | Identificador R_Of Identificador                                                      
+CONT_FOR_OF : R_Const Identificador R_Of Identificador                                            {$$ = {tipo : "CONTFOF" ,modificador : $1, identificador : $2 , vector :$4};}                         
+            | R_Let Identificador R_Of Identificador                                              {$$ = {tipo : "CONTFOF" ,modificador : $1, identificador : $2 , vector :$4};}   
+            | Identificador R_Of Identificador                                                    {$$ = {tipo : "CONTFOF" ,modificador : undefined, identificador : $2 , vector :$4};}   
 ;
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
@@ -306,14 +338,14 @@ LISTADO_ASIGNACION: LISTADO_ASIGNACION  CONTENIDO_ASIGNACION                    
                   | CONTENIDO_ASIGNACION                                                {$$ = [$1];}
 ;
 
-CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                          {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];};$$ = exp;$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}
+CONTENIDO_ASIGNACION: S_Coma Identificador S_Igual EXPRESION_G                          {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];}$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}], ope : '=', valor: exp, fila: this._$.first_line, columna: this._$.first_column};}
                     | S_Coma Identificador OP_Incremento                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '++D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
                     | S_Coma OP_Incremento Identificador                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $3, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A++' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
                     | S_Coma Identificador OP_Decremento                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $2, fila: this._$.first_line, columna: this._$.first_column}] ,ope : '--D' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
                     | S_Coma OP_Decremento Identificador                                {$$ = {tipo : "ASIGNACION" , identificador : [{tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $3, fila: this._$.first_line, columna: this._$.first_column}] ,ope : 'A--' , valor: undefined , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
-LISTA_DE_ASIGNACIONES : EXPRESION_G                                                     {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];};$$ = exp;}
+LISTA_DE_ASIGNACIONES : EXPRESION_G                                                     {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];}$$ = exp;}
                       | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra                 {$$ = $2;}
                       | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra               {$$ = $2;}
 ;
@@ -349,7 +381,7 @@ LISTA_ASIGN_ARRAY: LISTA_ASIGN_ARRAY S_Coma CONT_ARRAY_ASIGN_VV             {var
                  | CONT_ARRAY_ASIGN_VV                                      {$$ = $1;}
 ;   
 
-CONT_ARRAY_ASIGN_VV: EXPRESION_G                                            {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];};$$ = exp;}
+CONT_ARRAY_ASIGN_VV: EXPRESION_G                                            {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];}$$ = exp;}
                    | S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra        {$$ = $2;}
                    | S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra      {$$ = $2;}
 ;
@@ -370,14 +402,14 @@ LISTADO_VAR : LISTADO_VAR S_Coma CONT_VAR                                       
 
 CONT_VAR: Identificador S_DosPuntos TIPOS_DE_DATO /*declaracion de variable con tipo de dato*/              { $$ = {tipo : "VARIABLE" , identificador : $1 , tipoDato: undefined ,tipoDDV: $3, valor : undefined , fila: this._$.first_line , columna: this._$.first_column};}                                                                          
         //| Identificador /*declaracion de variable solo id*/                                     
-        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G/*declaracion de variable con tipo y asignacion de valor*/ {var exp;if(Array.isArray($5)){exp = $5;}else{exp = [$5];};$$ = {tipo : "VARIABLE", identificador : $1, tipoDato: undefined,tipoDDV: $3 , valor : exp , fila: this._$.first_line , columna: this._$.first_column};}
+        | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual EXPRESION_G/*declaracion de variable con tipo y asignacion de valor*/ {var exp;if(Array.isArray($5)){exp = $5;}else{exp = [$5];}$$ = {tipo : "VARIABLE", identificador : $1, tipoDato: undefined,tipoDDV: $3 , valor : exp , fila: this._$.first_line , columna: this._$.first_column};}
         //| Identificador S_Igual EXPRESION_G /*declaracion de variable con asignacion de valor*/                                     
 
 
-        | Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/                   {$$ = {tipo : "ARRAY" , identificador : $1 , tipoDato: undefined , valor : $4 , fila: this._$.first_line , columna: this._$.first_column};}                        
-        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array*/                                       {$$ = {tipo : "ARRAY" , identificador : $1 , tipoDato: $3 , valor : undefined , fila: this._$.first_line , columna: this._$.first_column};}                     
-        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/                 {$$ = {tipo : "ARRAY" , identificador : $1 , tipoDato: $3 , valor : $6 , fila: this._$.first_line , columna: this._$.first_column};}                      
-
+        //| Identificador S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra /*array*/                   {$$ = {tipo : "ARRAY" , identificador : $1 , tipoDato: undefined , valor : $4 , fila: this._$.first_line , columna: this._$.first_column};}                        
+        //| Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array*/                                       {$$ = {tipo : "ARRAY" , identificador : $1 , tipoDato: $3 , valor : undefined , fila: this._$.first_line , columna: this._$.first_column};}                     
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/                 {$$ = {tipo : "ARRAY" , identificador : $1 , tipoDato: $3 , valor : $6 , expresion : undefined , fila: this._$.first_line , columna: this._$.first_column};}                      
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual R_New R_Array S_ParentesisAbre EXPRESION_G S_ParentesisCierra  {var arr;if(Array.isArray($9)){arr = $9;}else{arr = [$9];} $$ = {tipo : "ARRAY" , identificador : $1 , tipoDato: $3 , valor : undefined , expresion : arr, fila: this._$.first_line , columna: this._$.first_column};}
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/   {$$ = {tipo : "TYPE" , identificador : $1 , tipoDato: $3 , valor : $6 , fila: this._$.first_line , columna: this._$.first_column};}                               
         | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                             {$$ = {tipo : "TYPE" , identificador : $1 , tipoDato: undefined , valor : $4 , fila: this._$.first_line , columna: this._$.first_column};}                               
@@ -385,13 +417,12 @@ CONT_VAR: Identificador S_DosPuntos TIPOS_DE_DATO /*declaracion de variable con 
 
 /*---------------------------------------------LLAMADAS A FUNCION---------------------------------------------------------*/
 
-LLAMADA_FUNC
-    : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa                  
+LLAMADA_FUNC : Identificador S_ParentesisAbre PARAMETROS_FUNC S_ParentesisCierra S_PuntoComa                  
 ;
 
 PARAMETROS_FUNC
-    : PARAMETROS_FUNC S_Coma EXPRESION_G        {var exp; var arr;if(Array.isArray($3)){arr = $3;}else{arr = [$3];}; exp = $1.concat(arr);$$ = exp;}
-    | EXPRESION_G                               {var arr;if(Array.isArray($1)){arr = $1;}else{arr = [$1];};$$ = arr;}                                               
+    : PARAMETROS_FUNC S_Coma EXPRESION_G        {var exp; var arr;if(Array.isArray($3)){arr = $3;}else{arr = [$3];} exp = $1.concat(arr);$$ = exp;}
+    | EXPRESION_G                               {var arr;if(Array.isArray($1)){arr = $1;}else{arr = [$1];}$$ = arr;}                                               
     |                                           {$$ = [];}                           
 ;
 /*---------------------------------------------PARAMETROS---------------------------------------------------------*/
@@ -456,11 +487,11 @@ TIPAR_FUNCION : S_DosPuntos TIPOS_DE_DATO
 ;
 /*---------------------------------------------ACCEDER A ATRIBUTOS---------------------------------------------------------*/
 
- ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS                                                {$1.push($3);$$ = $1;}
+ATRIBUTOS: ATRIBUTOS S_Punto CONT_ATRIBUTOS                                                {$1.push($3);$$ = $1;}
           | CONT_ATRIBUTOS                                                                  {$$ = [$1];}                                                          
- ;
+;
 
- CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                    
+CONT_ATRIBUTOS:  Identificador L_CORCHETE_V                                                    
                |  Identificador                                                             {$$ = {tipo : "VALOR" , tipoDato: "IDENTIFICADOR" , identificador : $1, fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
@@ -489,41 +520,42 @@ EXPRESION_G
     | CONTENIDO_EXPRESION                                                                   
 ;
 
- CONTENIDO_EXPRESION
+CONTENIDO_EXPRESION
     : Entero                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "ENTERO" , valor: $1 + ".0",fila: this._$.first_line , columna: this._$.first_column};}                     
     | Decimal                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "DECIMAL", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}    
     | R_True                                                                                {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                      
     | R_False                                                                               {$$ = {tipo:"PRIMITIVO" , tipoDato : "BOOLEAN", valor: $1,fila: this._$.first_line , columna: this._$.first_column};}                                                                          
     | Cadena                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
-    | R_Null                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "NULL" , valor: $1,fila: this._$.first_line , columna: this._$.first_column};} 
-    | Cadena MET_STRING     /*Metodos string*/
-    | ATRIBUTOS MET_STRING    /*Metodos string*/                                                                             
-    | Identificador S_ParentesisAbre S_ParentesisCierra                                     {$$ = {tipo : "LLAMADA_F" , identificador : $1 , parametros : [] , fila : this._$.first_line, columna: this._$.first_column};}
-    | Identificador S_ParentesisAbre S_ParentesisCierra MET_STRING   /*Metodos string*/                                     
+    | R_Null                                                                                {$$ = {tipo:"VALOR"     , tipoDato : "NULL"   , valor: -1,fila: this._$.first_line , columna: this._$.first_column};} 
+    | Cadena MET_STRING/*Metodos string*/                                                   {$$ = {tipo: "METSTRINGC", tipoDato : "CADENA" , cadena: {tipo:"VALOR"     , tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column} , contenido: $2 ,fila: this._$.first_line , columna: this._$.first_column };}
+    | ATRIBUTOS MET_STRING/*Metodos string*/                                                {$$ = {tipo: "METSTRINGI", tipoDato : "CADENA" , identificador: $1 , contenido: $2 ,fila: this._$.first_line , columna: this._$.first_column };}                             
+    | Identificador S_ParentesisAbre S_ParentesisCierra                                     {$$ = {tipo : "LLAMADA_F", identificador : $1 , parametros : [] , fila : this._$.first_line, columna: this._$.first_column};}
+    | Identificador S_ParentesisAbre S_ParentesisCierra MET_STRING/*Metodos string*/                                     
     | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra                            {$$ = {tipo : "LLAMADA_F" , identificador : $1 , parametros : $3 , fila : this._$.first_line, columna: this._$.first_column};}
-    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra MET_STRING  /*Metodos string*/                              
+    | Identificador S_ParentesisAbre OPCIONAL S_ParentesisCierra MET_STRING /*Metodos string*/                              
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                       {$$ = $2;}
-    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra   MET_STRING    /*Metodos string*/                                                                                                         
+    | S_ParentesisAbre EXPRESION_G S_ParentesisCierra   MET_STRING/*Metodos string*/        {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];}$$ = {tipo: "METSTRINGP", tipoDato : "CADENA" , expresion: exp , contenido: $4 ,fila: this._$.first_line , columna: this._$.first_column };}                                                                                                 
     | ATRIBUTOS                                                                             {$$ = $1;}    
-    | ATRIBUTOS S_Punto R_Length
-                                                                 
+    | ATRIBUTOS S_Punto R_Length                                                            {$$ = {tipo: "LENGTHI", tipoDato : "CADENA" , identificador: $1 ,fila: this._$.first_line , columna: this._$.first_column };}
+    | Cadena S_Punto R_Length                                                               {$$ = {tipo: "LENGTHC", tipoDato : "CADENA" , cadena: {tipo:"VALOR", tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column},fila: this._$.first_line , columna: this._$.first_column };}                                       
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */
 
 OPCIONAL 
-    : OPCIONAL S_Coma EXPRESION_G                                                           {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];};var v; v = $1.concat(exp);$$=v;}                                                                 
-    | EXPRESION_G                                                                           {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];};$$ = exp;}                                                           
+    : OPCIONAL S_Coma EXPRESION_G                                                           {var exp;if(Array.isArray($3)){exp = $3;}else{exp = [$3];}var v; v = $1.concat(exp);$$=v;}                                                                 
+    | EXPRESION_G                                                                           {var exp;if(Array.isArray($1)){exp = $1;}else{exp = [$1];}$$ = exp;}                                                           
 ; 
 
 /*----------------------------------------------------METODOS STRING----------------------------------------------------*/
 MET_STRING :L_MET_STRING
 ;
 
-L_MET_STRING : L_MET_STRING  CONT_MET_STRING
-             | CONT_MET_STRING
+L_MET_STRING : L_MET_STRING  CONT_MET_STRING                                                {$1.push($2); $$ = $1;}
+             | CONT_MET_STRING                                                              {$$ = [$1];}
 ;   
 
-CONT_MET_STRING: S_Punto R_CharAt S_ParentesisAbre EXPRESION_G S_ParentesisCierra
-               | S_Punto R_Tlower S_ParentesisAbre S_ParentesisCierra
-               | S_Punto R_Touppper S_ParentesisAbre S_ParentesisCierra
-               | S_Punto R_Concat S_ParentesisAbre OPCIONAL S_ParentesisCierra
+CONT_MET_STRING:  S_Punto R_CharAt S_ParentesisAbre EXPRESION_G S_ParentesisCierra           {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];}$$ = { tipo : "CHARAT" , contenido : exp ,fila: this._$.first_line , columna: this._$.first_column};}
+                | S_Punto R_Tlower S_ParentesisAbre S_ParentesisCierra                       {$$ = { tipo : "TOLOWERCASE" , contenido : [] ,fila: this._$.first_line , columna: this._$.first_column};}
+                | S_Punto R_Touppper S_ParentesisAbre S_ParentesisCierra                     {$$ = { tipo : "TOUPPERCASE" , contenido : [] ,fila: this._$.first_line , columna: this._$.first_column};}
+                | S_Punto R_Concat S_ParentesisAbre EXPRESION_G S_ParentesisCierra           {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];}$$ = { tipo : "CONCAT" , contenido : exp ,fila: this._$.first_line , columna: this._$.first_column};}
+                //| S_Punto R_Length                                                           {$$ = { tipo : "LENGTH" , contenido : []};}
 ;

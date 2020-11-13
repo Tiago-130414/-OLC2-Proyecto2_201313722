@@ -1,3 +1,0 @@
-FUNCTION PRUEBA() : number{
-    hola.Concat(2,"3",prueba).TOLOWERCASE();
-}

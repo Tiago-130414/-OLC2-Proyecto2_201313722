@@ -90,6 +90,7 @@ function generate(json, vec) {
 ////////////////////////////////////////FUNCION PARA IMPRIMIR ////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function generarImprimir(element) {
+
   var cod3 = [];
   var print = [];
   var exp;
@@ -97,6 +98,7 @@ function generarImprimir(element) {
   for (var ele of element) {
     //OBTENIENDO VALOR DE LA EXPRESION
     exp = leerExpresion(ele);
+    console.log(exp);
     if (exp.tipo != "Error Semantico") {
       if (exp.codigo3d != undefined) {
         if (exp.tipoDato == "BOOLEAN") {
@@ -141,15 +143,13 @@ function generarImprimir(element) {
         //SI EL VALOR OBTENIDO DE LA EXPRESION ES PRIMITIVO
         var vrT = verificarExpVU(exp); //VERIFICA LOS TIPOS SI ES PRIMITIVO Y SI SI RETORNA CODIGO DE 3 DIRECCIONES
         //SI ES CODIGO DE 3 DIRECCIONES
+        console.log(vrT);
         if (vrT.tipo == "C3D") {
           var cod = realizarPrint(vrT);
           cod3 = cod3.concat(cod.cod3);
           print = print.concat(cod.pr);
-        } else if (
-          (vrT.tipo == "PRIMITIVO" && vrT.tipoDato == "ENTERO") ||
-          (vrT.tipo == "PRIMITIVO" && vrT.tipoDato == "DECIMAL")
-        ) {
-          print.push({ tipo: "PRINT", tipoDato: vrT.tipoDato, val: ele.valor });
+        } else if ((vrT.tipo == "PRIMITIVO" && vrT.tipoDato == "ENTERO") || (vrT.tipo == "PRIMITIVO" && vrT.tipoDato == "DECIMAL")) {
+          print.push({ tipo: "PRINT", tipoDato: vrT.tipoDato, val: vrT.valor });
         } else if (vrT.tipo == "Error Semantico") {
           //SI LA VERIFICACION DE TIPOS RETORNA UN ERROR
           band = true;
@@ -645,6 +645,10 @@ function gError(desc, fil, col) {
 function gC3D(td, et, vec) {
   return { tipo: "C3D", tipoDato: td, etiqueta: et, codigo3d: vec };
 }
+
+function rPrimitivo(tp, tpD, val, f, c) {
+  return { tipo: tp, tipoDato: tpD, valor: val, fila: f, columna: c };
+}
 //FUNCION QUE GENERA EL CODIGO DE 3 DIRECCIONES PARA TODAS LAS OPERACIONES ARITMETICAS, LOGICAS, RELACIONALES Y UNARIAS
 function generarCodigo(opI, opD, op) {
   var etiq;
@@ -742,6 +746,174 @@ function generarCodigo(opI, opD, op) {
       cod3d.push(generoC3("heap[(int)" + etiq + "]", "h", etiq, "-"));
     } else if (tpD == "DECIMAL" || tpD == "ENTERO") {
       var etiqI, etiqD;
+      if (opI.tipo == "PRIMITIVO" && opI.valor == "0.0") {
+        if (opD.tipo == "PRIMITIVO") {
+          return opD;
+        } else {
+          etiq = opD.etiqueta;
+        }
+      } else if (opD.tipo == "PRIMITIVO" && opD.valor == "0.0") {
+        if (opI.tipo == "PRIMITIVO") {
+          return opI;
+        } else {
+          etiq = opI.etiqueta;
+        }
+      } else {
+        if (opI.tipo == "PRIMITIVO") {
+          etiqI = opI.valor;
+        } else if (opI.tipo == "VARIABLE") {
+          var t1 = rTemporal();
+          var t2 = rTemporal();
+          codI.push(generoC3("s", "", opI.inicioAmb, ""));
+          codI.push(generoC3(t1, "s", opI.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+          codI.push(generoC3("s", "", rInicioAmb(), ""));
+          codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+          etiqI = t2;
+        } else {
+          if (opI.tipoDato == "BOOLEAN") {
+            var t = rTemporal();
+            var etiqS = rLabel();
+            cod3d = cod3d.concat(opI.codigo3d);
+            codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbV));
+            codI.push(generoC3(t, "", 1, ""));
+            codI.push(generarGoto(etiqS));
+            codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbF));
+            codI.push(generoC3(t, "", 0, ""));
+            codI.push(generarEtiquetaJSON(etiqS));
+            etiqI = t;
+          } else {
+            etiqI = opI.etiqueta;
+          }
+        }
+
+        if (opD.tipo == "PRIMITIVO") {
+          etiqD = opD.valor;
+        } else if (opD.tipo == "VARIABLE") {
+          var t1 = rTemporal();
+          var t2 = rTemporal();
+          codD.push(generoC3("s", "", opD.inicioAmb, ""));
+          codD.push(generoC3(t1, "s", opD.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+          codD.push(generoC3("s", "", rInicioAmb(), ""));
+          codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+          etiqD = t2;
+        } else {
+          if (opD.tipoDato == "BOOLEAN") {
+            var t = rTemporal();
+            var etiqS = rLabel();
+            cod3d = cod3d.concat(opD.codigo3d);
+            codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbV));
+            codD.push(generoC3(t, "", 1, ""));
+            codD.push(generarGoto(etiqS));
+            codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbF));
+            codD.push(generoC3(t, "", 0, ""));
+            codD.push(generarEtiquetaJSON(etiqS));
+            etiqD = t;
+          } else {
+            etiqD = opD.etiqueta;
+          }
+        }
+
+        //JUNTANDO CODIGO DE LADO IZQ Y DER
+        cod3d = cod3d.concat(codI, codD);
+        etiq = rTemporal();
+
+        cod3d.push({
+          tipo: "C3D",
+          etiqueta: etiq,
+          opIzq: castearBoo(etiqI),
+          opDer: castearBoo(etiqD),
+          operacion: op,
+        });
+      }
+    }
+  } else if (op == "-" || op == "*" || op == "/" || op == "%") {
+    var etiqI, etiqD;
+    if (op == "-" && opI.tipo == "PRIMITIVO" && opI.valor == "0.0") {
+      if (opD.tipo == "PRIMITIVO") {
+        return opD;
+      } else {
+        etiq = opD.etiqueta;
+      }
+      //&& opD.tipo != "PRIMITIVO"
+    } else if (op == "-" && opD.tipo == "PRIMITIVO" && opD.valor == "0.0") {
+      if (opI.tipo == "PRIMITIVO") {
+        return opI;
+      } else {
+        etiq = opI.etiqueta;
+      }
+    } else if (op == "*" && opI.tipo == "PRIMITIVO" && opI.valor == "0.0") {
+      // && opD.tipo != "PRIMITIVO"
+      return rPrimitivo("PRIMITIVO", opD.tipoDato, 0.0, opD.fila, opD.columna);
+    } else if (op == "*" && opD.tipo == "PRIMITIVO" && opD.valor == "0.0") {
+      //&& opI.tipo != "PRIMITIVO"
+      return rPrimitivo("PRIMITIVO", opI.tipoDato, 0.0, opI.fila, opI.columna);
+    } else if (op == "*" && opI.tipo == "PRIMITIVO" && opI.valor == "1.0") {
+      if (opD.tipo == "PRIMITIVO") {
+        return opD;
+      } else {
+        etiq = opD.etiqueta;
+      }
+      //&& opD.tipo != "PRIMITIVO"
+    } else if (op == "*" && opD.tipo == "PRIMITIVO" && opD.valor == "1.0") {
+      if (opI.tipo == "PRIMITIVO") {
+        return opI;
+      } else {
+        etiq = opI.etiqueta;
+      }
+      //&& opI.tipo != "PRIMITIVO"
+    } else if (op == "*" && opI.tipo == "PRIMITIVO" && opI.valor == "2.0") {
+      etiq = rTemporal();
+      if (opD.tipo == "PRIMITIVO") {
+        cod3d.push({
+          tipo: "C3D",
+          etiqueta: etiq,
+          opIzq: opD.valor,
+          opDer: opD.valor,
+          operacion: "+",
+        });
+      } else {
+        cod3d.push({
+          tipo: "C3D",
+          etiqueta: etiq,
+          opIzq: opD.etiqueta,
+          opDer: opD.etiqueta,
+          operacion: "+",
+        });
+      }
+      //&& opD.tipo != "PRIMITIVO"
+    } else if (op == "*" && opD.tipo == "PRIMITIVO" && opD.valor == "2.0") {
+      etiq = rTemporal();
+      if (opI.tipo == "PRIMITIVO") {
+        cod3d.push({
+          tipo: "C3D",
+          etiqueta: etiq,
+          opIzq: opI.valor,
+          opDer: opI.valor,
+          operacion: "+",
+        });
+      } else {
+        cod3d.push({
+          tipo: "C3D",
+          etiqueta: etiq,
+          opIzq: opI.etiqueta,
+          opDer: opI.etiqueta,
+          operacion: "+",
+        });
+      }
+      //&& opI.tipo != "PRIMITIVO"
+    } else if (op == "/" && opI.tipo == "PRIMITIVO" && opI.valor == "0.0") {
+      return rPrimitivo("PRIMITIVO", opI.tipoDato, 0.0, opI.fila, opI.columna);
+    } else if (op == "/" && opD.tipo == "PRIMITIVO" && opD.valor == "0.0") {
+      return rPrimitivo("PRIMITIVO", opD.tipoDato, 0.0, opD.fila, opD.columna);
+    } else if (op == "/" && opD.tipo == "PRIMITIVO" && opD.valor == "1.0") {
+      if (opI.tipo == "PRIMITIVO") {
+        return opI;
+      } else {
+        etiq = opI.etiqueta;
+      }
+      //&& opI.tipo != "PRIMITIVO" 
+    } else {
+
       if (opI.tipo == "PRIMITIVO") {
         etiqI = opI.valor;
       } else if (opI.tipo == "VARIABLE") {
@@ -753,20 +925,7 @@ function generarCodigo(opI, opD, op) {
         codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
         etiqI = t2;
       } else {
-        if (opI.tipoDato == "BOOLEAN") {
-          var t = rTemporal();
-          var etiqS = rLabel();
-          cod3d = cod3d.concat(opI.codigo3d);
-          codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbV));
-          codI.push(generoC3(t, "", 1, ""));
-          codI.push(generarGoto(etiqS));
-          codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbF));
-          codI.push(generoC3(t, "", 0, ""));
-          codI.push(generarEtiquetaJSON(etiqS));
-          etiqI = t;
-        } else {
-          etiqI = opI.etiqueta;
-        }
+        etiqI = opI.etiqueta;
       }
 
       if (opD.tipo == "PRIMITIVO") {
@@ -780,78 +939,24 @@ function generarCodigo(opI, opD, op) {
         codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
         etiqD = t2;
       } else {
-        if (opD.tipoDato == "BOOLEAN") {
-          var t = rTemporal();
-          var etiqS = rLabel();
-          cod3d = cod3d.concat(opD.codigo3d);
-          codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbV));
-          codD.push(generoC3(t, "", 1, ""));
-          codD.push(generarGoto(etiqS));
-          codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbF));
-          codD.push(generoC3(t, "", 0, ""));
-          codD.push(generarEtiquetaJSON(etiqS));
-          etiqD = t;
-        } else {
-          etiqD = opD.etiqueta;
-        }
+        etiqD = opD.etiqueta;
       }
-
       //JUNTANDO CODIGO DE LADO IZQ Y DER
       cod3d = cod3d.concat(codI, codD);
-      etiq = rTemporal();
 
-      cod3d.push({
-        tipo: "C3D",
-        etiqueta: etiq,
-        opIzq: castearBoo(etiqI),
-        opDer: castearBoo(etiqD),
-        operacion: op,
-      });
-    }
-  } else if (op == "-" || op == "*" || op == "/" || op == "%") {
-    var etiqI, etiqD;
-    if (opI.tipo == "PRIMITIVO") {
-      etiqI = opI.valor;
-    } else if (opI.tipo == "VARIABLE") {
-      var t1 = rTemporal();
-      var t2 = rTemporal();
-      codI.push(generoC3("s", "", opI.inicioAmb, ""));
-      codI.push(generoC3(t1, "s", opI.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
-      codI.push(generoC3("s", "", rInicioAmb(), ""));
-      codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
-      etiqI = t2;
-    } else {
-      etiqI = opI.etiqueta;
-    }
-
-    if (opD.tipo == "PRIMITIVO") {
-      etiqD = opD.valor;
-    } else if (opD.tipo == "VARIABLE") {
-      var t1 = rTemporal();
-      var t2 = rTemporal();
-      codD.push(generoC3("s", "", opD.inicioAmb, ""));
-      codD.push(generoC3(t1, "s", opD.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
-      codD.push(generoC3("s", "", rInicioAmb(), ""));
-      codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
-      etiqD = t2;
-    } else {
-      etiqD = opD.etiqueta;
-    }
-    //JUNTANDO CODIGO DE LADO IZQ Y DER
-    cod3d = cod3d.concat(codI, codD);
-
-    if (op == "%") {
-      etiq = rTemporal();
-      cod3d.push(gLLM(etiq, etiqI, etiqD));
-    } else {
-      etiq = rTemporal();
-      cod3d.push({
-        tipo: "C3D",
-        etiqueta: etiq,
-        opIzq: etiqI,
-        opDer: etiqD,
-        operacion: op,
-      });
+      if (op == "%") {
+        etiq = rTemporal();
+        cod3d.push(gLLM(etiq, etiqI, etiqD));
+      } else {
+        etiq = rTemporal();
+        cod3d.push({
+          tipo: "C3D",
+          etiqueta: etiq,
+          opIzq: etiqI,
+          opDer: etiqD,
+          operacion: op,
+        });
+      }
     }
   } else if (op == "**") {
     var etiqI, etiqD;
@@ -1264,49 +1369,6 @@ function generarCodigo(opI, opD, op) {
   }
   return gC3D(tpD, etiq, cod3d);
 }
-///////////////////////////////////////////OPTIMIZACION PARA SUMAS Y RESTAS, SI ES 0 RETORNA "" DE LO CONTRARIO EL VALOR
-function opCeroSR(temporal, opI, etiqI, opD, etiqD, op) {
-  if (opI.tipo == "PRIMITIVO" && opD.tipo != "PRIMITIVO") {
-    if (opI.valor == 0) {
-      return {
-        tipo: "C3D",
-        etiqueta: etiq,
-        opIzq: "",
-        opDer: castearBoo(etiqD),
-        operacion: "",
-      };
-    } else {
-      return {
-        tipo: "C3D",
-        etiqueta: etiq,
-        opIzq: castearBoo(etiqI),
-        opDer: castearBoo(etiqD),
-        operacion: op,
-      };
-    }
-  } else if (opI.tipo != "PRIMITIVO" && opD.tipo == "PRIMITIVO") {
-    if (opD.valor == 0) {
-      return {
-        tipo: "C3D",
-        etiqueta: etiq,
-        opIzq: castearBoo(etiqI),
-        opDer: "",
-        operacion: "",
-      };
-    } else {
-      return {
-        tipo: "C3D",
-        etiqueta: etiq,
-        opIzq: castearBoo(etiqI),
-        opDer: castearBoo(etiqD),
-        operacion: op,
-      };
-    }
-  } else {
-    return false;
-  }
-}
-
 //FUNCION QUE DEVUELVE CODIGO DE 3 DIRECCIONES SOLO PARA CADENA
 function generarCodigo3Direcciones(op, etiqB) {
   var v = [];
@@ -1499,8 +1561,8 @@ function operacionesIncremento(exp) {
             } else {
               return gError(
                 "El tipo de dato -> " +
-                  variable.tipoDato +
-                  ", no aplica a una operacion de tipo NUMBER",
+                variable.tipoDato +
+                ", no aplica a una operacion de tipo NUMBER",
                 exp.fila,
                 exp.columna
               );
@@ -1559,8 +1621,8 @@ function operacionesIncremento(exp) {
               } else {
                 return gError(
                   "El tipo de dato -> " +
-                    variable.tipoDato +
-                    ", no aplica a una operacion de tipo NUMBER",
+                  variable.tipoDato +
+                  ", no aplica a una operacion de tipo NUMBER",
                   exp.fila,
                   exp.columna
                 );
@@ -1620,8 +1682,8 @@ function operacionesIncremento(exp) {
             } else {
               return gError(
                 "El tipo de dato -> " +
-                  variable.tipoDato +
-                  ", no aplica a una operacion de tipo NUMBER",
+                variable.tipoDato +
+                ", no aplica a una operacion de tipo NUMBER",
                 exp.fila,
                 exp.columna
               );
@@ -1680,8 +1742,8 @@ function operacionesIncremento(exp) {
               } else {
                 return gError(
                   "El tipo de dato -> " +
-                    variable.tipoDato +
-                    ", no aplica a una operacion de tipo NUMBER",
+                  variable.tipoDato +
+                  ", no aplica a una operacion de tipo NUMBER",
                   exp.fila,
                   exp.columna
                 );
@@ -2234,7 +2296,7 @@ function asignacionVariables(ele) {
         erroresCI.push(
           gError(
             "No es posible reasignar valor a una constante -> " +
-              id.identificador,
+            id.identificador,
             ele.fila,
             ele.columna
           )
@@ -2752,7 +2814,7 @@ function generarCodigoForOf(exp, vectorBre) {
           erroresCI.push(
             gError(
               "La variable a la que desea asignar el valor del for of, no corresponde el tipo con el vector -> " +
-                v,
+              v,
               exp.fila,
               exp.columna
             )

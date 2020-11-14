@@ -29,7 +29,7 @@ function encabezado(contenido) {
   encabezado += "/******************************************************/\n";
   encabezado += "//////////////////POTENCIA///////////////////\n";
   encabezado += "float m0, m1, m2, m3, m4;\n";
-  encabezado += "int m5 = 1, m22; //m22 resultado potencia\n";
+  encabezado += "float m5 = 1, m22; //m22 resultado potencia\n";
   encabezado += "/******************************************************/\n";
   encabezado += "//////////////////IMPRIMIR CADENA///////////////////\n";
   encabezado += "double m6;\n";

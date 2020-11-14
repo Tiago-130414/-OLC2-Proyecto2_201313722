@@ -332,7 +332,7 @@ L_C: L_C LISTA_CORCHETE                                     {$$ = {Nombre : "L_C
 ;
 
 /*LISTA PARA DECLARACIONES*/
-LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra            {var nom = $1+$2; $$ = {Nombre : nom , vector : []};}                        
+LISTA_CORCHETE : S_CorcheteAbre S_CorcheteCierra            {var nom = $1+" "+$2; $$ = {Nombre : nom , vector : []};}                        
 ;
 ///LISTA CORCHETES CON VALOR
 L_CORCHETE_V : L_C_V
@@ -385,7 +385,7 @@ CONT_VAR: Identificador /*declaracion de variable solo id*/                     
         | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE/*array*/                                                                               {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4]};}
         //| Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra
         | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual L_CORCHETE_V /*array*/                                                         {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4,{Nombre : $5 , vector : []},$6]};}
-        //| Identificador S_DosPuntos TIPOS_DE_DATO S_CorcheteAbre S_CorcheteCierra S_Igual S_CorcheteAbre CONT_ASIG_ARRAY S_CorcheteCierra
+        | Identificador S_DosPuntos TIPOS_DE_DATO L_CORCHETE S_Igual R_New R_Array S_ParentesisAbre EXPRESION_G S_ParentesisCierra                  {$$ = {Nombre : "ARRAY" , vector : [{Nombre : $1 , vector : []},$3,$4,{Nombre : $5 , vector : []},{Nombre : $6 , vector : []},{Nombre : $7 , vector : []},{Nombre : $8 , vector : []},$9,{Nombre : $10 , vector : []}]};}
 
         | Identificador S_DosPuntos TIPOS_DE_DATO S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                               {$$ = {Nombre : "TYPE" ,vector : [{Nombre : $1 , vector : []},$3,$6]};}
         | Identificador S_Igual S_LlaveAbre LISTA_DECLARACION_TYPES S_LlaveCierra /*types*/                                                         {$$ = {Nombre : "TYPE" ,vector : [{Nombre : $1 , vector : []},$4]};}
@@ -517,6 +517,7 @@ EXPRESION_G
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                           {$$ = $2;}
     | ATRIBUTOS                                                                                 {$$ = $1;}
     | ATRIBUTOS S_Punto R_Length                                                                {$$ = {Nombre : "FUNCION_LENGTH" , vector : [$1 , {Nombre : $3 , vector : []}]};}
+    | Cadena S_Punto R_Length                                                                   {$$ = {Nombre : "FUNCION_LENGTH" , vector : [{Nombre: $1 , vector : []} , {Nombre : $3 , vector : []}]};}
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */   
 
 OPCIONAL 

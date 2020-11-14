@@ -84,6 +84,14 @@ function encabezado(contenido) {
   encabezado += "double m49; //valor\n";
   encabezado += "double m50; //retorno\n";
   encabezado += "/******************************************************/\n";
+  encabezado += "///////////////////////// OBTOBJ ///////////////////////\n";
+  encabezado += "double m51; // encabezado\n";
+  encabezado += "int m52;    //indice\n";
+  encabezado += "int m53;    // inicio\n";
+  encabezado += "int m54;    //tama�o\n";
+  encabezado += "int m55;    //aux\n";
+  encabezado += "double m56; //retorno\n";
+  encabezado += "/******************************************************/\n";
   encabezado += "void rNull()\n";
   encabezado += "{\n";
   encabezado += "    m34 = h;\n";
@@ -451,11 +459,34 @@ function encabezado(contenido) {
   encabezado += "    rNull();\n";
   encabezado += "    m50 = m34;\n";
   encabezado += "}\n\n";
+  encabezado += "void obtenerObj()\n";
+  encabezado += "{\n";
+  encabezado += "    m53 = m51 + 1;\n";
+  encabezado += "    m54 = heap[(int)m51] - 1;\n";
+  encabezado += "    m55 = 0;\n";
+  encabezado += "    m56 = 0;\n";
+  encabezado += "    if (m52 >= 0.0)\n";
+  encabezado += "        goto n72;\n";
+  encabezado += "    goto n73;\n";
+  encabezado += "n72:\n";
+  encabezado += "    if (m52 < m54)\n";
+  encabezado += "        goto n74;\n";
+  encabezado += "    goto n75;\n";
+  encabezado += "n74:\n";
+  encabezado += "    m55 = m53 + m52;\n";
+  encabezado += "    m56 = heap[m55];\n";
+  encabezado += "    goto n71;\n";
+  encabezado += "n73:\n";
+  encabezado += "n75:\n";
+  encabezado += "n71:\n";
+  encabezado += "    return;\n";
+  encabezado += "}\n\n";
   encabezado += "int main()\n";
   encabezado += "{\n";
   encabezado += contenido + "\n";
   encabezado += "    return 0;\n";
   encabezado += "}\n";
+
   return encabezado;
 }
 

@@ -56,6 +56,7 @@
 "true"                                              {return 'R_True';}    
 "false"                                             {return 'R_False';}
 "undefined"                                         {return 'R_Undefined';}
+"obtObj"                                            {return 'R_ObtenerOBJ';}
 
 /*  EXPRESION */
 
@@ -982,7 +983,7 @@ EXPRESION_G
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra   MET_STRING    /*Metodos string*/        {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];};var json = [{tipo : "concatenar" , contenido : $1 }].concat(exp); json.push({tipo : "concatenar" , contenido : $3 });json = json.concat($4);$$ = json;}
     | Identificador S_ParentesisAbre S_ParentesisCierra MET_STRING   /*Metodos string*/         {var json = [{tipo : "concatenar" , contenido : $1 },{tipo : "concatenar" , contenido : $2},{tipo : "concatenar" , contenido : $3 }].concat($4); $$ = json;}
     | Cadena S_Punto R_Length     /*Metodos string*/                                            {var json  = [{tipo : "valor" , contenido : $1},{tipo : "concatenar" , contenido : $2},{tipo : "concatenar" , contenido : $3}];$$ = json;}
-    
+    | ATRIBUTOS S_Punto R_ObtenerOBJ S_ParentesisAbre EXPRESION_G S_ParentesisCierra            {var json = $1;json.push({tipo : "concatenar" , contenido : $2 });json.push({tipo : "concatenar" , contenido : $3 });json.push({tipo : "concatenar" , contenido : $4 }); json = json.concat($5);json.push({tipo : "concatenar" , contenido : $6 }); $$= json;}
 ; 
 
 OPCIONAL 
@@ -1002,6 +1003,4 @@ CONT_MET_STRING:  S_Punto R_CharAt S_ParentesisAbre EXPRESION_G S_ParentesisCier
                 | S_Punto R_Tlower S_ParentesisAbre S_ParentesisCierra                           {var json = [{tipo : "concatenar" , contenido :$1},{tipo : "concatenar" , contenido :$2},{tipo : "concatenar" , contenido :$3},{tipo : "concatenar" , contenido :$4}];$$ = json;}
                 | S_Punto R_Touppper S_ParentesisAbre S_ParentesisCierra                         {var json = [{tipo : "concatenar" , contenido :$1},{tipo : "concatenar" , contenido :$2},{tipo : "concatenar" , contenido :$3},{tipo : "concatenar" , contenido :$4}];$$ = json;}
                 | S_Punto R_Concat S_ParentesisAbre EXPRESION_G S_ParentesisCierra               {var temp;var json = [];if(Array.isArray($4)){temp = $4;}else{temp = [$4];};json.push({tipo : "concatenar" , contenido :$1});json.push({tipo : "concatenar" , contenido :$2});json.push({tipo : "concatenar" , contenido :$3});json = json.concat(temp);json.push({tipo : "concatenar" , contenido :$5});$$ = json}
-                //| S_Punto R_Length                                                               {var json = [];json.push({tipo : "concatenar" , contenido :$1});json.push({tipo : "concatenar" , contenido :$2});$$ = json;}
-
 ;

@@ -53,7 +53,9 @@ function generate(json, vec) {
     } else if (element.tipo == "FOR") {
       generarCodigoFor(element, vec);
     } else if (element.tipo == "FORIN") {
+      generarCodigoForIn(element, vec);
     } else if (element.tipo == "FOROF") {
+      generarCodigoForOf(element, vec);
     } else if (element.tipo == "BREAK") {
       var cod = generarCodigoST(
         vec,
@@ -92,7 +94,6 @@ function generarImprimir(element) {
   var print = [];
   var exp;
   var band = false;
-  //console.log(element);
   for (var ele of element) {
     //OBTENIENDO VALOR DE LA EXPRESION
     exp = leerExpresion(ele);
@@ -121,7 +122,8 @@ function generarImprimir(element) {
           var iniC = rTemporal();
           cod3.push(generoC3(iniC, "h", "", ""));
           cod3.push(generoC3("h", "h", 1, "+"));
-          cod3.push(gLL("cBool", val));
+          cod3.push(generoC3("m23", "", val, ""));
+          cod3.push(gLL("cBool", ""));
           cod3.push(generoC3("heap[(int)" + iniC + "]", "h", iniC, "-"));
           cod3.push(generoC3("m6", "", iniC, ""));
           cod3.push(gLL("impCad", ""));
@@ -132,6 +134,8 @@ function generarImprimir(element) {
           cod3.push({ tipo: "PRINT", tipoDato: exp.tipoDato, val: val });
         } else if (exp.tipoDato == "DECIMAL") {
           cod3.push({ tipo: "PRINT", tipoDato: exp.tipoDato, val: val });
+        } else if (exp.tipoDato == "NUMERO") {
+          cod3.push({ tipo: "PRINT", tipoDato: "DECIMAL", val: val });
         }
       } else {
         //SI EL VALOR OBTENIDO DE LA EXPRESION ES PRIMITIVO
@@ -307,6 +311,8 @@ function leerExpresion(expresion) {
     return metodoStringE(expresion);
   } else if (expresion.tipo == "LENGTHC" || expresion.tipo == "LENGTHI") {
     return generarLength(expresion);
+  } else if (expresion.tipo == "OBJ") {
+    return generarObtenerObjeto(expresion);
   } else if (expresion.tipo == "C3D") {
     return expresion;
   }
@@ -453,7 +459,6 @@ function evaluarPotencia(opI, opD) {
 function operacionesRelacionales(element) {
   var opI = leerExpresion(element.OpIzq);
   var opD = leerExpresion(element.OpDer);
-
   if (
     element.tipo == ">=" ||
     element.tipo == ">" ||
@@ -742,14 +747,26 @@ function generarCodigo(opI, opD, op) {
       } else if (opI.tipo == "VARIABLE") {
         var t1 = rTemporal();
         var t2 = rTemporal();
-        console.log(opI.inicioAmb);
         codI.push(generoC3("s", "", opI.inicioAmb, ""));
         codI.push(generoC3(t1, "s", opI.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
         codI.push(generoC3("s", "", rInicioAmb(), ""));
         codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
         etiqI = t2;
       } else {
-        etiqI = opI.etiqueta;
+        if (opI.tipoDato == "BOOLEAN") {
+          var t = rTemporal();
+          var etiqS = rLabel();
+          cod3d = cod3d.concat(opI.codigo3d);
+          codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbV));
+          codI.push(generoC3(t, "", 1, ""));
+          codI.push(generarGoto(etiqS));
+          codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbF));
+          codI.push(generoC3(t, "", 0, ""));
+          codI.push(generarEtiquetaJSON(etiqS));
+          etiqI = t;
+        } else {
+          etiqI = opI.etiqueta;
+        }
       }
 
       if (opD.tipo == "PRIMITIVO") {
@@ -757,15 +774,28 @@ function generarCodigo(opI, opD, op) {
       } else if (opD.tipo == "VARIABLE") {
         var t1 = rTemporal();
         var t2 = rTemporal();
-        console.log(opD.inicioAmb);
         codD.push(generoC3("s", "", opD.inicioAmb, ""));
         codD.push(generoC3(t1, "s", opD.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
         codD.push(generoC3("s", "", rInicioAmb(), ""));
         codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
         etiqD = t2;
       } else {
-        etiqD = opD.etiqueta;
+        if (opD.tipoDato == "BOOLEAN") {
+          var t = rTemporal();
+          var etiqS = rLabel();
+          cod3d = cod3d.concat(opD.codigo3d);
+          codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbV));
+          codD.push(generoC3(t, "", 1, ""));
+          codD.push(generarGoto(etiqS));
+          codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbF));
+          codD.push(generoC3(t, "", 0, ""));
+          codD.push(generarEtiquetaJSON(etiqS));
+          etiqD = t;
+        } else {
+          etiqD = opD.etiqueta;
+        }
       }
+
       //JUNTANDO CODIGO DE LADO IZQ Y DER
       cod3d = cod3d.concat(codI, codD);
       etiq = rTemporal();
@@ -894,7 +924,6 @@ function generarCodigo(opI, opD, op) {
     }
     //JUNTANDO CODIGO DE LADO IZQ Y DER
     cod3d = cod3d.concat(codI, codD);
-
     //GENERANDO CODIGO DE CORTO CIRCUITO
     var lblV = rLabel();
     var vV = [];
@@ -1235,6 +1264,49 @@ function generarCodigo(opI, opD, op) {
   }
   return gC3D(tpD, etiq, cod3d);
 }
+///////////////////////////////////////////OPTIMIZACION PARA SUMAS Y RESTAS, SI ES 0 RETORNA "" DE LO CONTRARIO EL VALOR
+function opCeroSR(temporal, opI, etiqI, opD, etiqD, op) {
+  if (opI.tipo == "PRIMITIVO" && opD.tipo != "PRIMITIVO") {
+    if (opI.valor == 0) {
+      return {
+        tipo: "C3D",
+        etiqueta: etiq,
+        opIzq: "",
+        opDer: castearBoo(etiqD),
+        operacion: "",
+      };
+    } else {
+      return {
+        tipo: "C3D",
+        etiqueta: etiq,
+        opIzq: castearBoo(etiqI),
+        opDer: castearBoo(etiqD),
+        operacion: op,
+      };
+    }
+  } else if (opI.tipo != "PRIMITIVO" && opD.tipo == "PRIMITIVO") {
+    if (opD.valor == 0) {
+      return {
+        tipo: "C3D",
+        etiqueta: etiq,
+        opIzq: castearBoo(etiqI),
+        opDer: "",
+        operacion: "",
+      };
+    } else {
+      return {
+        tipo: "C3D",
+        etiqueta: etiq,
+        opIzq: castearBoo(etiqI),
+        opDer: castearBoo(etiqD),
+        operacion: op,
+      };
+    }
+  } else {
+    return false;
+  }
+}
+
 //FUNCION QUE DEVUELVE CODIGO DE 3 DIRECCIONES SOLO PARA CADENA
 function generarCodigo3Direcciones(op, etiqB) {
   var v = [];
@@ -1907,7 +1979,7 @@ function declaracionArreglos(elemento, mod) {
   var c3d = [];
   var idVector = elemento.identificador;
   var tipoDVec;
-  console.log(elemento);
+  //console.log(elemento);
   if (!buscarVariable(idVector)) {
     //SE NECESITA SABER QUE TIPO DE VECTOR ES
     //si valor no es undefined let p : number [] = [1,2,3,4,5,6];
@@ -1962,7 +2034,6 @@ function declaracionArreglos(elemento, mod) {
         var c3dV = generarC3DVector(vNull);
         c3d = c3d.concat(c3dV.codigo3d);
         //vectorNull
-
         var tmp1 = rTemporal();
         var t = rTActual();
         c3d.push(generoC3(tmp1, "s", posAmb - 1, "+"));
@@ -2000,7 +2071,7 @@ function verificarExpVectores(tpD, vec, fil, col) {
   if (Array.isArray(vec)) {
     for (var element of vec) {
       var exp = leerExpresion(element);
-      console.log(exp);
+      //console.log(exp);
       if (tpD == cambiarTNumber(exp.tipoDato)) {
         if (exp.tipo == "C3D") {
           c3d = c3d.concat(exp.codigo3d);
@@ -2086,6 +2157,7 @@ function asignacion(exp) {
 }
 
 function asignacionVariables(ele) {
+  //console.log(ele);
   var c3d = [];
   if (ele.ope == "=") {
     //SOY UNA ASGINACION DE VARIABLE
@@ -2104,7 +2176,7 @@ function asignacionVariables(ele) {
           if (
             (variable.tipoDato == "ENTERO" && exp.tipoDato == "DECIMAL") ||
             (variable.tipoDato == "DECIMAL" && exp.tipoDato == "ENTERO") ||
-            variable.tipoDato == exp.tipoDato
+            cambiarTNumber(variable.tipoDato) == cambiarTNumber(exp.tipoDato)
           ) {
             var temp = rTemporal();
             var val;
@@ -2148,8 +2220,8 @@ function asignacionVariables(ele) {
             erroresCI.push(
               gError(
                 "El tipo de dato del valor a asignar no corresponde con el declarado de la variable",
-                ele.fila,
-                ele.columna
+                exp.fila,
+                exp.columna
               )
             );
           }
@@ -2500,7 +2572,7 @@ function generarCodigoDoWhile(exp, v) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////FUNCION PARA C3D DE FOR ////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function generarCodigoFor(exp, v) {
+function generarCodigoFor(exp, v, variableAux) {
   var c3d = [];
   var inicioFor = exp.inicio;
   var condicion;
@@ -2514,7 +2586,7 @@ function generarCodigoFor(exp, v) {
   c3d.push(agregarAmbito("FOR"));
   imprimirC3(c3d);
   c3d = [];
-  //DECLARACION DEL FOR
+
   ambA = rAmbActual();
   if (inicioFor.tipo == "DECLARACION") {
     declaracion(inicioFor.contenido, inicioFor.modificador);
@@ -2529,6 +2601,11 @@ function generarCodigoFor(exp, v) {
       }
     }
   }
+
+  if (variableAux != undefined) {
+    declaracion(variableAux.contenido, "let");
+  }
+
   condicion = leerExpresion(exp.expresion[0]);
   if (condicion.tipo != "Error Semantico") {
     if (condicion.tipoDato == "BOOLEAN") {
@@ -2578,16 +2655,124 @@ function generarCodigoFor(exp, v) {
 //////////////////////////////////////FUNCION PARA C3D DE FORIN //////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function generarCodigoForIn(exp) {
-  console.log(exp);
+function generarCodigoForIn(exp, varV) {
+  var mod = exp.contenido.modificador;
+  if (mod != undefined) {
+    //cuando trae declaracion
+    var id = exp.contenido.identificador;
+    var v = exp.contenido.vector;
+    if (buscarVariable(v)) {
+      var gF = prototipoFIN(id, v, exp.instrucciones, exp.fila, exp.columna);
+      generarCodigoFor(gF, varV, undefined);
+    } else {
+      erroresCI.push(
+        gError(
+          "El vector que desea recorrer no esta declarado",
+          exp.fila,
+          exp.columna
+        )
+      );
+    }
+  } else {
+    //cuando es solo un identificador
+    //prototipoFINA
+    var id = exp.contenido.identificador;
+    var v = exp.contenido.vector;
+    if (buscarVariable(id)) {
+      if (buscarVariable(v)) {
+        var gF = prototipoFINA(id, v, exp.instrucciones, exp.fila, exp.columna);
+        generarCodigoFor(gF, varV);
+      } else {
+        erroresCI.push(
+          gError(
+            "El vector que desea recorrer no esta declarado -> " + v,
+            exp.fila,
+            exp.columna
+          )
+        );
+      }
+    } else {
+      erroresCI.push(
+        gError("Variable no declarada -> " + id, exp.fila, exp.columna)
+      );
+    }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////FUNCION PARA C3D DE FOROF //////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function generarCodigoForOf(exp) {
-  console.log(exp);
+function generarCodigoForOf(exp, vectorBre) {
+  var mod = exp.contenido.modificador;
+  if (mod != undefined) {
+    //cuando trae declaracion
+    var id = exp.contenido.identificador;
+    var v = exp.contenido.vector;
+    if (buscarVariable(v)) {
+      var vector = buscarVModificar(exp, v);
+      var gF = prototipoFOF(id, v, exp.instrucciones, exp.fila, exp.columna);
+      var variableAux = declaracionVOF(
+        id,
+        vector.tipoDato,
+        exp.fila,
+        exp.columna
+      );
+      generarCodigoFor(gF, vectorBre, variableAux);
+    } else {
+      erroresCI.push(
+        gError(
+          "El vector que desea recorrer no esta declarado",
+          exp.fila,
+          exp.columna
+        )
+      );
+    }
+  } else {
+    //cuando es solo un identificador
+    //prototipoFINA
+    var id = exp.contenido.identificador;
+    var v = exp.contenido.vector;
+    if (buscarVariable(id)) {
+      if (buscarVariable(v)) {
+        var variable = buscarVModificar(exp, id);
+        var vector = buscarVModificar(exp, v);
+        if (
+          cambiarTNumber(variable.tipoDato) == cambiarTNumber(vector.tipoDato)
+        ) {
+          var gF = prototipoFOF(
+            id,
+            v,
+            exp.instrucciones,
+            exp.fila,
+            exp.columna
+          );
+          generarCodigoFor(gF, vectorBre, undefined);
+        } else {
+          erroresCI.push(
+            gError(
+              "La variable a la que desea asignar el valor del for of, no corresponde el tipo con el vector -> " +
+                v,
+              exp.fila,
+              exp.columna
+            )
+          );
+        }
+      } else {
+        erroresCI.push(
+          gError(
+            "El vector que desea recorrer no esta declarado -> " + v,
+            exp.fila,
+            exp.columna
+          )
+        );
+      }
+    } else {
+      erroresCI.push(
+        gError("Variable no declarada -> " + id, exp.fila, exp.columna)
+      );
+    }
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2825,7 +3010,6 @@ function mString(etiqueta, cont) {
             c3d.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
             val = t2;
           } else if (exp.tipo == "PRIMITIVO") {
-            //conseguir etiqueta
             val = exp.valor;
           }
           var p = generarCharAt(eti, val);
@@ -2856,7 +3040,7 @@ function generarLength(exp) {
         c3d = c3d.concat(cad.codigo3d);
         var cod = gC3DLength(cad.etiqueta);
         c3d = c3d.concat(cod.codigo3d);
-        return gC3D(cod.tipoDato, cod.etiqueta, c3d);
+        return gC3D("ENTERO", cod.etiqueta, c3d);
       } else {
         return gError(
           "Tipo de dato no compatible con un metodo string length",
@@ -2879,7 +3063,17 @@ function generarLength(exp) {
         c3d.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
         var cod = gC3DLength(t2);
         c3d = c3d.concat(cod.codigo3d);
-        return gC3D(cod.tipoDato, cod.etiqueta, c3d);
+        return gC3D("ENTERO", cod.etiqueta, c3d);
+      } else if (cad.tipo == "ARRAY") {
+        var t1 = rTemporal();
+        var t2 = rTemporal();
+        c3d.push(generoC3("s", "", cad.inicioAmb, ""));
+        c3d.push(generoC3(t1, "s", cad.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+        c3d.push(generoC3("s", "", rInicioAmb(), ""));
+        c3d.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+        var cod = gC3DLength(t2);
+        c3d = c3d.concat(cod.codigo3d);
+        return gC3D("ENTERO", cod.etiqueta, c3d);
       } else {
         return gError(
           "Tipo de dato no compatible con un metodo string length",
@@ -2936,6 +3130,89 @@ function generarCharAt(tmp, indice) {
   c3d.push(generoC3("m45", "", indice, ""));
   c3d.push(gLL("charAt", ""));
   return gC3D("CADENA", "m50", c3d);
+}
+
+function generarObtenerObjeto(element) {
+  var c3d = [];
+  var id = leerExpresion(element.identificador);
+  var tpdVector;
+  var etiqueta;
+  var etIndice;
+  if (id.tipo != "Error Semantico") {
+    if (id.tipo == "ARRAY") {
+      var exp = leerExpresion(element.contenido[0]);
+      if (exp.tipo != "Error Semantico") {
+        //guardo el tipo de dato para hacer el retorno
+        tpdVector = id.tipoDato;
+        //si la expresion esta correcta se saca la posicion del vector
+        var t1 = rTemporal();
+        var t2 = rTemporal();
+        c3d.push(generoC3("s", "", id.inicioAmb, ""));
+        c3d.push(generoC3(t1, "s", id.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+        c3d.push(generoC3("s", "", rInicioAmb(), ""));
+        c3d.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+        etiqueta = t2;
+        // se procede a procesar la expresion
+        if (exp.tipoDato == "ENTERO") {
+          //se verifica si es
+          if (exp.tipo == "VARIABLE") {
+            var t1 = rTemporal();
+            var t2 = rTemporal();
+            c3d.push(generoC3("s", "", exp.inicioAmb, ""));
+            c3d.push(generoC3(t1, "s", exp.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+            c3d.push(generoC3("s", "", rInicioAmb(), ""));
+            c3d.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+            etIndice = t2;
+          } else if (exp.tipo == "C3D") {
+            c3d = c3d.concat(exp.codigo3d);
+            etIndice = exp.etiqueta;
+          } else if (exp.tipo == "PRIMITIVO") {
+            etIndice = exp.valor;
+          }
+          var c3dOBJ = gC3DObtObj(tpdVector, etiqueta, etIndice);
+          c3d = c3d.concat(c3dOBJ.codigo3d);
+          return gC3D(tpdVector, c3dOBJ.etiqueta, c3d);
+        } else {
+          return gError(
+            "Operacion valida unicamente con indices enteros",
+            id.fila,
+            id.columna
+          );
+        }
+      } else {
+        return exp;
+      }
+    } else {
+      return gError(
+        "El ciclo for of unicamente es aplicable sobre array",
+        id.fila,
+        id.columna
+      );
+    }
+  } else {
+    return id;
+  }
+}
+////codigo de 3 direcciones de obtener objeto
+function gC3DObtObj(tpd, tmp, indice) {
+  var c3d = [];
+  var eti = "m56";
+  if (tpd == "BOOLEAN") {
+    var etV = rLabel();
+    var etF = rLabel();
+    eti = [];
+    c3d.push(generoC3("m51", "", tmp, ""));
+    c3d.push(generoC3("m52", "", indice, ""));
+    c3d.push(gLL("obtenerObj", ""));
+    c3d.push(generarIfB("m56", etV));
+    c3d.push(generarGoto(etF));
+    eti.push({ lbV: etV, lbF: etF });
+  } else {
+    c3d.push(generoC3("m51", "", tmp, ""));
+    c3d.push(generoC3("m52", "", indice, ""));
+    c3d.push(gLL("obtenerObj", ""));
+  }
+  return gC3D(tpd, eti, c3d);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////FUNCIONES PARA FUNCIONAMIENTO BASICO/////////////////////////////////
@@ -3018,8 +3295,9 @@ function agregarAmbito(nombre) {
 }
 ///////////////////////////////////////////////INSERTAR VALOR EN EL AMBITO ACTUAL
 function insertarAmbito(nValor) {
-  var json = ambitos[ambitos.length - 1].DatosAmbito;
-  json.push(nValor);
+  var json = ambitos[ambitos.length - 1];
+  json.CantidadE++;
+  json.DatosAmbito.push(nValor);
 }
 
 function rInicioAmb() {
@@ -3100,7 +3378,9 @@ function buscarVModificar(ele, idV) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function prototipoFIN(idV, idVector, f, c) {
+//PROTOTIPO FOR IN CON DECLARACION
+
+function prototipoFIN(idV, idVector, inst, f, c) {
   var ptFIN = {
     tipo: "FOR",
     inicio: {
@@ -3109,19 +3389,19 @@ function prototipoFIN(idV, idVector, f, c) {
       contenido: [
         {
           tipo: "VARIABLE",
-          identificador: "i",
+          identificador: idV,
           tipoDDV: "NUMERO",
           valor: [
             {
               tipo: "PRIMITIVO",
               tipoDato: "ENTERO",
-              valor: "0.0",
-              fila: 3,
-              columna: 24,
+              valor: 0,
+              fila: f,
+              columna: c,
             },
           ],
-          fila: 3,
-          columna: 5,
+          fila: f,
+          columna: c,
         },
       ],
     },
@@ -3131,9 +3411,9 @@ function prototipoFIN(idV, idVector, f, c) {
           {
             tipo: "VALOR",
             tipoDato: "IDENTIFICADOR",
-            identificador: "i",
-            fila: 3,
-            columna: 29,
+            identificador: idV,
+            fila: f,
+            columna: c,
           },
         ],
         tipo: "<",
@@ -3144,13 +3424,13 @@ function prototipoFIN(idV, idVector, f, c) {
             {
               tipo: "VALOR",
               tipoDato: "IDENTIFICADOR",
-              identificador: "a",
-              fila: 3,
-              columna: 33,
+              identificador: idVector,
+              fila: f,
+              columna: c,
             },
           ],
-          fila: 3,
-          columna: 33,
+          fila: f,
+          columna: c,
         },
       },
     ],
@@ -3160,31 +3440,246 @@ function prototipoFIN(idV, idVector, f, c) {
         {
           tipo: "VALOR",
           tipoDato: "IDENTIFICADOR",
-          identificador: "i",
-          fila: 3,
-          columna: 43,
+          identificador: idV,
+          fila: f,
+          columna: c,
         },
       ],
       ope: "++D",
-      fila: 3,
-      columna: 43,
+      fila: f,
+      columna: c,
     },
-    instrucciones: [
+    instrucciones: inst,
+    fila: f,
+    columna: c,
+  };
+  return ptFIN;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//PROTOTIPO FOR IN SIN DECLARACION
+
+function prototipoFINA(idV, idVector, inst, f, c) {
+  var p = {
+    tipo: "FOR",
+    inicio: {
+      tipo: "ASIGNACION",
+      identificador: [
+        {
+          tipo: "VALOR",
+          tipoDato: "IDENTIFICADOR",
+          identificador: idV,
+          fila: f,
+          columna: c,
+        },
+      ],
+      ope: "=",
+      valor: [
+        {
+          tipo: "PRIMITIVO",
+          tipoDato: "ENTERO",
+          valor: 0.0,
+          fila: f,
+          columna: c,
+        },
+      ],
+      fila: f,
+      columna: c,
+    },
+    expresion: [
       {
-        tipo: "IMPRIMIR",
-        instruccion: "CONSOLE",
-        contenido: [
+        OpIzq: [
           {
             tipo: "VALOR",
             tipoDato: "IDENTIFICADOR",
-            identificador: "i",
-            fila: 4,
-            columna: 12,
+            identificador: idV,
+            fila: f,
+            columna: c,
           },
         ],
+        tipo: "<",
+        OpDer: {
+          tipo: "LENGTHI",
+          tipoDato: "CADENA",
+          identificador: [
+            {
+              tipo: "VALOR",
+              tipoDato: "IDENTIFICADOR",
+              identificador: idVector,
+              fila: f,
+              columna: c,
+            },
+          ],
+          fila: f,
+          columna: c,
+        },
       },
     ],
-    fila: 3,
-    columna: 0,
+    fin: {
+      tipo: "ASIGNACION",
+      identificador: [
+        {
+          tipo: "VALOR",
+          tipoDato: "IDENTIFICADOR",
+          identificador: idV,
+          fila: f,
+          columna: c,
+        },
+      ],
+      ope: "++D",
+      fila: f,
+      columna: c,
+    },
+    instrucciones: inst,
+    fila: f,
+    columna: c,
   };
+  return p;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//PROTOTIPO FOR OF CON DECLARACION
+
+function prototipoFOF(idV, idVector, inst, f, c) {
+  var instru = [];
+  instru = asig(idV, idVector, f, c).concat(inst);
+  var p = {
+    tipo: "FOR",
+    inicio: {
+      tipo: "DECLARACION",
+      modificador: "let",
+      contenido: [
+        {
+          tipo: "VARIABLE",
+          identificador: "ind",
+          tipoDDV: "NUMERO",
+          valor: [
+            {
+              tipo: "PRIMITIVO",
+              tipoDato: "ENTERO",
+              valor: 0,
+              fila: f,
+              columna: c,
+            },
+          ],
+          fila: f,
+          columna: c,
+        },
+      ],
+    },
+    expresion: [
+      {
+        OpIzq: [
+          {
+            tipo: "VALOR",
+            tipoDato: "IDENTIFICADOR",
+            identificador: "ind",
+            fila: f,
+            columna: c,
+          },
+        ],
+        tipo: "<",
+        OpDer: {
+          tipo: "LENGTHI",
+          tipoDato: "ENTERO",
+          identificador: [
+            {
+              tipo: "VALOR",
+              tipoDato: "IDENTIFICADOR",
+              identificador: idVector,
+              fila: f,
+              columna: c,
+            },
+          ],
+          fila: f,
+          columna: c,
+        },
+      },
+    ],
+    fin: {
+      tipo: "ASIGNACION",
+      identificador: [
+        {
+          tipo: "VALOR",
+          tipoDato: "IDENTIFICADOR",
+          identificador: "ind",
+          fila: f,
+          columna: c,
+        },
+      ],
+      ope: "++D",
+      fila: f,
+      columna: c,
+    },
+    instrucciones: instru,
+    fila: f,
+    columna: c,
+  };
+  return p;
+}
+
+function declaracionVOF(idV, tpd, f, c) {
+  var decl = {
+    tipo: "DECLARACION",
+    modificador: "let",
+    contenido: [
+      {
+        tipo: "VARIABLE",
+        identificador: idV,
+        tipoDDV: tpd,
+        fila: f,
+        columna: c,
+      },
+    ],
+  };
+  return decl;
+}
+
+function asig(idV, idVector, f, c) {
+  var p = [
+    {
+      tipo: "LISTA_ASIGNACION",
+      contenido: [
+        {
+          tipo: "ASIGNACION",
+          identificador: [
+            {
+              tipo: "VALOR",
+              tipoDato: "IDENTIFICADOR",
+              identificador: idV,
+              fila: f,
+              columna: c,
+            },
+          ],
+          ope: "=",
+          valor: [
+            {
+              tipo: "OBJ",
+              identificador: [
+                {
+                  tipo: "VALOR",
+                  tipoDato: "IDENTIFICADOR",
+                  identificador: idVector,
+                  fila: f,
+                  columna: c,
+                },
+              ],
+              contenido: [
+                {
+                  tipo: "VALOR",
+                  tipoDato: "IDENTIFICADOR",
+                  identificador: "ind",
+                  fila: f,
+                  columna: c,
+                },
+              ],
+              fila: f,
+              columna: c,
+            },
+          ],
+        },
+      ],
+    },
+  ];
+  return p;
 }

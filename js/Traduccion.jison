@@ -55,6 +55,7 @@
 "true"                                              {return 'R_True';}    
 "false"                                             {return 'R_False';}
 "undefined"                                         {return 'R_Undefined';}
+"obtObj"                                            {return 'R_ObtenerOBJ';}
 
 /*  EXPRESION */
 
@@ -302,22 +303,22 @@ FIN_FOR
 ;
 /*---------------------------------------------FOR IN---------------------------------------------------------*/
 
-FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra      {$$ = {tipo : "FORIN" , contenido : $3, instrucciones : $6};}
+FOR_IN: R_For S_ParentesisAbre CONT_FOR_IN S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra      {$$ = {tipo : "FORIN" , contenido : $3, instrucciones : $6 , fila: this._$.first_line, columna: this._$.first_column};}
 ;
 
-CONT_FOR_IN : R_Const Identificador R_In Identificador                                           {$$ = {tipo : "CONTFIN" ,modificador : $1, identificador : $2 , vector :$4};}               
-            | R_Let Identificador R_In Identificador                                             {$$ = {tipo : "CONTFIN" ,modificador : $1, identificador : $2 , vector :$4};}   
-            | Identificador R_In Identificador                                                   {$$ = {tipo : "CONTFIN" ,modificador : undefined, identificador : $2 , vector :$4};}  
+CONT_FOR_IN : R_Const Identificador R_In Identificador                                           {$$ = {tipo : "CONTFIN" ,modificador : $1, identificador : $2 , vector :$4 , fila: this._$.first_line, columna: this._$.first_column};}               
+            | R_Let Identificador R_In Identificador                                             {$$ = {tipo : "CONTFIN" ,modificador : $1, identificador : $2 , vector :$4 , fila: this._$.first_line, columna: this._$.first_column};}   
+            | Identificador R_In Identificador                                                   {$$ = {tipo : "CONTFIN" ,modificador : undefined, identificador : $1, vector :$3 , fila: this._$.first_line, columna: this._$.first_column};}  
 ;
 
 
 /*---------------------------------------------FOR OF---------------------------------------------------------*/
-FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra       {$$ = {tipo : "FOROF" , contenido : $3, instrucciones : $6};}  
+FOR_OF: R_For S_ParentesisAbre CONT_FOR_OF S_ParentesisCierra S_LlaveAbre EDD S_LlaveCierra       {$$ = {tipo : "FOROF" , contenido : $3, instrucciones : $6 ,fila: this._$.first_line, columna: this._$.first_column};}  
 ;
 
-CONT_FOR_OF : R_Const Identificador R_Of Identificador                                            {$$ = {tipo : "CONTFOF" ,modificador : $1, identificador : $2 , vector :$4};}                         
-            | R_Let Identificador R_Of Identificador                                              {$$ = {tipo : "CONTFOF" ,modificador : $1, identificador : $2 , vector :$4};}   
-            | Identificador R_Of Identificador                                                    {$$ = {tipo : "CONTFOF" ,modificador : undefined, identificador : $2 , vector :$4};}   
+CONT_FOR_OF : R_Const Identificador R_Of Identificador                                            {$$ = {tipo : "CONTFOF" ,modificador : $1, identificador : $2, vector :$4 ,fila: this._$.first_line, columna: this._$.first_column};}                         
+            | R_Let Identificador R_Of Identificador                                              {$$ = {tipo : "CONTFOF" ,modificador : $1, identificador : $2 , vector :$4 ,fila: this._$.first_line, columna: this._$.first_column};}   
+            | Identificador R_Of Identificador                                                    {$$ = {tipo : "CONTFOF" ,modificador : undefined, identificador : $1 , vector :$3 ,fila: this._$.first_line, columna: this._$.first_column};}   
 ;
 
 /*---------------------------------------------ASIGNACION VARIABLES---------------------------------------------------------*/
@@ -536,8 +537,9 @@ CONTENIDO_EXPRESION
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra                                       {$$ = $2;}
     | S_ParentesisAbre EXPRESION_G S_ParentesisCierra   MET_STRING/*Metodos string*/        {var exp;if(Array.isArray($2)){exp = $2;}else{exp = [$2];}$$ = {tipo: "METSTRINGP", tipoDato : "CADENA" , expresion: exp , contenido: $4 ,fila: this._$.first_line , columna: this._$.first_column };}                                                                                                 
     | ATRIBUTOS                                                                             {$$ = $1;}    
-    | ATRIBUTOS S_Punto R_Length                                                            {$$ = {tipo: "LENGTHI", tipoDato : "CADENA" , identificador: $1 ,fila: this._$.first_line , columna: this._$.first_column };}
-    | Cadena S_Punto R_Length                                                               {$$ = {tipo: "LENGTHC", tipoDato : "CADENA" , cadena: {tipo:"VALOR", tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column},fila: this._$.first_line , columna: this._$.first_column };}                                       
+    | ATRIBUTOS S_Punto R_Length                                                            {$$ = {tipo: "LENGTHI", tipoDato : "ENTERO" , identificador: $1 ,fila: this._$.first_line , columna: this._$.first_column };}
+    | Cadena S_Punto R_Length                                                               {$$ = {tipo: "LENGTHC", tipoDato : "ENTERO" , cadena: {tipo:"VALOR", tipoDato : "CADENA" , valor: $1,fila: this._$.first_line , columna: this._$.first_column},fila: this._$.first_line , columna: this._$.first_column };}        
+    | ATRIBUTOS S_Punto R_ObtenerOBJ S_ParentesisAbre EXPRESION_G S_ParentesisCierra       {var exp;if(Array.isArray($5)){exp = $5;}else{exp = [$5];}$$ = { tipo : "OBJ" ,identificador :$1 , contenido : exp ,fila: this._$.first_line , columna: this._$.first_column};}                               
 ; /*ATRIBUTOS CONTIENE ID Y VECTOR */
 
 OPCIONAL 
@@ -557,5 +559,4 @@ CONT_MET_STRING:  S_Punto R_CharAt S_ParentesisAbre EXPRESION_G S_ParentesisCier
                 | S_Punto R_Tlower S_ParentesisAbre S_ParentesisCierra                       {$$ = { tipo : "TOLOWERCASE" , contenido : [] ,fila: this._$.first_line , columna: this._$.first_column};}
                 | S_Punto R_Touppper S_ParentesisAbre S_ParentesisCierra                     {$$ = { tipo : "TOUPPERCASE" , contenido : [] ,fila: this._$.first_line , columna: this._$.first_column};}
                 | S_Punto R_Concat S_ParentesisAbre EXPRESION_G S_ParentesisCierra           {var exp;if(Array.isArray($4)){exp = $4;}else{exp = [$4];}$$ = { tipo : "CONCAT" , contenido : exp ,fila: this._$.first_line , columna: this._$.first_column};}
-                //| S_Punto R_Length                                                           {$$ = { tipo : "LENGTH" , contenido : []};}
 ;

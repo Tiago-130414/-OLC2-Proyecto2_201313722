@@ -998,47 +998,88 @@ function generarCodigo(opI, opD, op) {
     etiq = "m22";
   } else if (op == ">" || op == ">=" || op == "<" || op == "<=") {
     var etiqI, etiqD;
-
-    /////VERIFICANDO VALORES DL LADO IZQUIERDO DE LA OPERACION
-    if (opI.tipo == "PRIMITIVO") {
+    if (op == ">" && opI.tipo == "PRIMITIVO" && opD.tipo == "PRIMITIVO" && opI.valor > opD.valor) {
       etiqI = opI.valor;
-    } else if (opI.tipo == "VARIABLE") {
-      var t1 = rTemporal();
-      var t2 = rTemporal();
-      codI.push(generoC3("s", "", opI.inicioAmb, ""));
-      codI.push(generoC3(t1, "s", opI.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
-      codI.push(generoC3("s", "", rInicioAmb(), ""));
-      codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
-      etiqI = t2;
-    } else {
-      etiqI = opI.etiqueta;
-    }
-    /////VERIFICANDO VALORES DL LADO DERECHO DE LA OPERACION
-    if (opD.tipo == "PRIMITIVO") {
       etiqD = opD.valor;
-    } else if (opD.tipo == "VARIABLE") {
-      var t1 = rTemporal();
-      var t2 = rTemporal();
-      codD.push(generoC3("s", "", opD.inicioAmb, ""));
-      codD.push(generoC3(t1, "s", opD.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
-      codD.push(generoC3("s", "", rInicioAmb(), ""));
-      codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
-      etiqD = t2;
+      var lblV = rLabel();
+      var vV = [];
+      var vF = [];
+      vV.push(lblV);
+      cod3d.push(generarIf(etiqI, op, etiqD, lblV));
+      etiq = [{ lbV: vV, lbF: vF }];
+    } else if (op == ">=" && opI.tipo == "PRIMITIVO" && opD.tipo == "PRIMITIVO" && opI.valor >= opD.valor) {
+      etiqI = opI.valor;
+      etiqD = opD.valor;
+      var lblV = rLabel();
+      var vV = [];
+      var vF = [];
+      vV.push(lblV);
+      cod3d.push(generarIf(etiqI, op, etiqD, lblV));
+      etiq = [{ lbV: vV, lbF: vF }];
+    } else if (op == "<" && opI.tipo == "PRIMITIVO" && opD.tipo == "PRIMITIVO" && opI.valor < opD.valor) {
+      etiqI = opI.valor;
+      etiqD = opD.valor;
+      var lblV = rLabel();
+      var vV = [];
+      var vF = [];
+      vV.push(lblV);
+      cod3d.push(generarIf(etiqI, op, etiqD, lblV));
+      etiq = [{ lbV: vV, lbF: vF }];
+    } else if (op == "<=" && opI.tipo == "PRIMITIVO" && opD.tipo == "PRIMITIVO" && opI.valor <= opD.valor) {
+      etiqI = opI.valor;
+      etiqD = opD.valor;
+      var lblV = rLabel();
+      var vV = [];
+      var vF = [];
+      vV.push(lblV);
+      cod3d.push(generarIf(etiqI, op, etiqD, lblV));
+      etiq = [{ lbV: vV, lbF: vF }];
     } else {
-      etiqD = opD.etiqueta;
+
+      /////VERIFICANDO VALORES DL LADO IZQUIERDO DE LA OPERACION
+      if (opI.tipo == "PRIMITIVO") {
+        etiqI = opI.valor;
+      } else if (opI.tipo == "VARIABLE") {
+        var t1 = rTemporal();
+        var t2 = rTemporal();
+        codI.push(generoC3("s", "", opI.inicioAmb, ""));
+        codI.push(generoC3(t1, "s", opI.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+        codI.push(generoC3("s", "", rInicioAmb(), ""));
+        codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+        etiqI = t2;
+      } else {
+        etiqI = opI.etiqueta;
+      }
+      /////VERIFICANDO VALORES DL LADO DERECHO DE LA OPERACION
+      if (opD.tipo == "PRIMITIVO") {
+        etiqD = opD.valor;
+      } else if (opD.tipo == "VARIABLE") {
+        var t1 = rTemporal();
+        var t2 = rTemporal();
+        codD.push(generoC3("s", "", opD.inicioAmb, ""));
+        codD.push(generoC3(t1, "s", opD.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+        codD.push(generoC3("s", "", rInicioAmb(), ""));
+        codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+        etiqD = t2;
+      } else {
+        etiqD = opD.etiqueta;
+      }
+      //JUNTANDO CODIGO DE LADO IZQ Y DER
+      cod3d = cod3d.concat(codI, codD);
+      //GENERANDO CODIGO DE CORTO CIRCUITO
+      var lblV = rLabel();
+      var vV = [];
+      vV.push(lblV);
+      var lblF = rLabel();
+      var vF = [];
+      vF.push(lblF);
+      cod3d.push(generarIf(etiqI, op, etiqD, lblV));
+      cod3d.push(generarGoto(lblF));
+      etiq = [{ lbV: vV, lbF: vF }];
+
     }
-    //JUNTANDO CODIGO DE LADO IZQ Y DER
-    cod3d = cod3d.concat(codI, codD);
-    //GENERANDO CODIGO DE CORTO CIRCUITO
-    var lblV = rLabel();
-    var vV = [];
-    vV.push(lblV);
-    var lblF = rLabel();
-    var vF = [];
-    vF.push(lblF);
-    cod3d.push(generarIf(etiqI, op, etiqD, lblV));
-    cod3d.push(generarGoto(lblF));
-    etiq = [{ lbV: vV, lbF: vF }];
+
+
   } else if (op == "==" || op == "!=") {
     if (opI.tipoDato == "CADENA" && opD.tipoDato == "CADENA") {
       var etiq1 = ""; //izquierdo
@@ -1094,48 +1135,99 @@ function generarCodigo(opI, opD, op) {
     ) {
       var etiq1 = ""; //izquierdo
       var etiq2 = ""; //derecho
-      //LADO IZQUIERDO
-      if (opI.tipo == "PRIMITIVO" || opI.tipoDato == "NULL") {
+      if (op == "==" && opI.tipo == "PRIMITIVO" && opD.tipo == "PRIMITIVO" && opI.valor == opD.valor && opI.tipoDato != "BOOLEAN" && OpD.tipoDato != "BOOLEAN") {
         etiq1 = opI.valor;
-      } else if (opI.tipo == "VARIABLE") {
-        var t1 = rTemporal();
-        var t2 = rTemporal();
-        codI.push(generoC3("s", "", opI.inicioAmb, ""));
-        codI.push(generoC3(t1, "s", opI.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
-        codI.push(generoC3("s", "", rInicioAmb(), ""));
-        codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
-        etiq1 = t2;
-      } else {
-        codI = codI.concat(opI.codigo3d);
-        etiq1 = opI.etiqueta;
-      }
-      //LADO DERECHO
-      if (opD.tipo == "PRIMITIVO" || opD.tipoDato == "NULL") {
         etiq2 = opD.valor;
-      } else if (opD.tipo == "VARIABLE") {
-        var t1 = rTemporal();
-        var t2 = rTemporal();
-        codD.push(generoC3("s", "", opD.inicioAmb, ""));
-        codD.push(generoC3(t1, "s", opD.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
-        codD.push(generoC3("s", "", rInicioAmb(), ""));
-        codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
-        etiq2 = t2;
+
+        var lblV = rLabel();
+        var lblF = rLabel();
+        var vV = [];
+        var vF = [];
+        vV.push(lblV);
+        cod3d.push(generarIf(etiq1, op, etiq2, lblV));
+        //cod3d.push(generarGoto(lblF));
+        etiq = [{ lbV: vV, lbF: vF }];
+      } else if (op == "!=" && opI.tipo == "PRIMITIVO" && opD.tipo == "PRIMITIVO" && opI.valor != opD.valor && opI.tipoDato != "BOOLEAN" && OpD.tipoDato != "BOOLEAN") {
+        etiq1 = opI.valor;
+        etiq2 = opD.valor;
+        var lblV = rLabel();
+        var lblF = rLabel();
+        var vV = [];
+        var vF = [];
+        vV.push(lblV);
+        cod3d.push(generarIf(etiq1, op, etiq2, lblV));
+        //cod3d.push(generarGoto(lblF));
+        etiq = [{ lbV: vV, lbF: vF }];
       } else {
-        codD = codD.concat(opD.codigo3d);
-        etiq2 = opD.etiqueta;
+        //LADO IZQUIERDO
+        if (opI.tipo == "PRIMITIVO" || opI.tipoDato == "NULL") {
+          etiq1 = opI.valor;
+        } else if (opI.tipo == "VARIABLE") {
+          var t1 = rTemporal();
+          var t2 = rTemporal();
+          codI.push(generoC3("s", "", opI.inicioAmb, ""));
+          codI.push(generoC3(t1, "s", opI.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+          codI.push(generoC3("s", "", rInicioAmb(), ""));
+          codI.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+          etiq1 = t2;
+        } else {
+          if (opI.tipoDato == "BOOLEAN") {
+            var t = rTemporal();
+            var etiqS = rLabel();
+            codI = codI.concat(opI.codigo3d);
+            codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbV));
+            codI.push(generoC3(t, "", 1, ""));
+            codI.push(generarGoto(etiqS));
+            codI.push(generarEtiquetaJSON(opI.etiqueta[0].lbF));
+            codI.push(generoC3(t, "", 0, ""));
+            codI.push(generarEtiquetaJSON(etiqS));
+            etiq1 = t;
+          } else {
+            codI = codI.concat(opI.codigo3d);
+            etiq1 = opI.etiqueta;
+          }
+        }
+        //LADO DERECHO
+        if (opD.tipo == "PRIMITIVO" || opD.tipoDato == "NULL") {
+          etiq2 = opD.valor;
+        } else if (opD.tipo == "VARIABLE") {
+          var t1 = rTemporal();
+          var t2 = rTemporal();
+          codD.push(generoC3("s", "", opD.inicioAmb, ""));
+          codD.push(generoC3(t1, "s", opD.pos, "+")); //se accesa a la variable mediante la posicion guardada en tabla de simbolos
+          codD.push(generoC3("s", "", rInicioAmb(), ""));
+          codD.push(generoC3(t2, "", "stack[(int)" + t1 + "]", "")); // se obtiene el valor
+          etiq2 = t2;
+        } else {
+          if (opD.tipoDato == "BOOLEAN") {
+            var t = rTemporal();
+            var etiqS = rLabel();
+            codD = codD.concat(opD.codigo3d);
+            codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbV));
+            codD.push(generoC3(t, "", 1, ""));
+            codD.push(generarGoto(etiqS));
+            codD.push(generarEtiquetaJSON(opD.etiqueta[0].lbF));
+            codD.push(generoC3(t, "", 0, ""));
+            codD.push(generarEtiquetaJSON(etiqS));
+            etiq2 = t;
+          } else {
+            codD = codD.concat(opD.codigo3d);
+            etiq2 = opD.etiqueta;
+          }
+        }
+        //JUNTANDO CODIGO DE LADO IZQ Y DER
+        cod3d = cod3d.concat(codI, codD);
+        //GENERANDO CODIGO DE CORTO CIRCUITO
+        var lblV = rLabel();
+        var vV = [];
+        vV.push(lblV);
+        var lblF = rLabel();
+        var vF = [];
+        vF.push(lblF);
+        cod3d.push(generarIf(etiq1, op, etiq2, lblV));
+        cod3d.push(generarGoto(lblF));
+        etiq = [{ lbV: vV, lbF: vF }];
       }
-      //JUNTANDO CODIGO DE LADO IZQ Y DER
-      cod3d = cod3d.concat(codI, codD);
-      //GENERANDO CODIGO DE CORTO CIRCUITO
-      var lblV = rLabel();
-      var vV = [];
-      vV.push(lblV);
-      var lblF = rLabel();
-      var vF = [];
-      vF.push(lblF);
-      cod3d.push(generarIf(etiq1, op, etiq2, lblV));
-      cod3d.push(generarGoto(lblF));
-      etiq = [{ lbV: vV, lbF: vF }];
     } else if (
       (opI.tipoDato == "NULL" && opD.tipoDato == "CADENA") ||
       (opI.tipoDato == "CADENA" && opD.tipoDato == "NULL")
